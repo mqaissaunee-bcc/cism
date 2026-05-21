@@ -68,6 +68,19 @@
     outline-offset: 2px;
   }
 
+  /* Screen-reader-only utility */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
   /* ============ HEADER ============ */
   header.site {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
@@ -234,11 +247,12 @@
     color: var(--accent);
   }
   .module-card .open-link::after {
-    content: "→";
+    content: "↗";
     transition: transform 0.18s ease;
+    font-size: 1.05em;
   }
   .module-card:hover .open-link::after {
-    transform: translateX(4px);
+    transform: translate(3px, -3px);
   }
 
   /* Special two-card row for paired modules (e.g., part 1 + part 2, practice + guide) */
@@ -309,7 +323,7 @@
 
     <div class="card-pair">
 
-      <a class="module-card" href="cism-ai-bridge-part1.html">
+      <a class="module-card" href="cism-ai-bridge-part1.html" target="_blank" rel="noopener noreferrer">
         <div class="card-eyebrow">Part 1 of 2</div>
         <h3>AI Governance &amp; Risk Management</h3>
         <p class="lede">Where CISM ends, AAISM begins. Frameworks, regulation, AI risk taxonomy, shadow AI, vendor and supply chain management, and acceptable use.</p>
@@ -322,10 +336,10 @@
           <strong>Covers</strong>
           NIST AI RMF · ISO/IEC 42001 · EU AI Act risk-tier classifier · AI risk taxonomy matcher · Shadow AI scenarios · Vendor risk workshop · AI Acceptable Use Policy · TerraHealth Insurance capstone
         </div>
-        <span class="open-link">Open module</span>
+        <span class="open-link">Open module<span class="sr-only"> (opens in new tab)</span></span>
       </a>
 
-      <a class="module-card accent" href="cism-ai-bridge-part2.html">
+      <a class="module-card accent" href="cism-ai-bridge-part2.html" target="_blank" rel="noopener noreferrer">
         <div class="card-eyebrow">Part 2 of 2</div>
         <h3>AI Threats, Controls &amp; Incident Response</h3>
         <p class="lede">The operational side of the bridge. Threat landscape, security architecture, data lifecycle controls, red-teaming, and AI-specific incident response.</p>
@@ -338,7 +352,7 @@
           <strong>Covers</strong>
           OWASP LLM Top 10 (2025) · MITRE ATLAS · AI defense-in-depth · AIBOM &amp; model cards · AI red-teaming · NIST 800-61 for AI · Three-scenario tabletop (deepfake, prompt injection, model poisoning)
         </div>
-        <span class="open-link">Open module</span>
+        <span class="open-link">Open module<span class="sr-only"> (opens in new tab)</span></span>
       </a>
 
     </div>
@@ -356,7 +370,7 @@
 
     <div class="card-pair">
 
-      <a class="module-card" href="siem-correlation-practice.html">
+      <a class="module-card" href="siem-correlation-practice.html" target="_blank" rel="noopener noreferrer">
         <div class="card-eyebrow">Student Module</div>
         <h3>SIEM Correlation Practice</h3>
         <p class="lede">Ten interactive log-correlation scenarios. Read the console, pick the malicious events, build the attack chain. Designed to develop the pattern recognition core to SOC Tier-1 work.</p>
@@ -369,10 +383,10 @@
           <strong>Skills practiced</strong>
           Log analysis · Indicator pivoting · Attack-chain reconstruction · Distinguishing routine vs. malicious telemetry · MITRE ATT&amp;CK mapping
         </div>
-        <span class="open-link">Open module</span>
+        <span class="open-link">Open module<span class="sr-only"> (opens in new tab)</span></span>
       </a>
 
-      <a class="module-card accent" href="siem-correlation-instructor-guide.html">
+      <a class="module-card accent" href="siem-correlation-instructor-guide.html" target="_blank" rel="noopener noreferrer">
         <div class="card-eyebrow">Instructor Companion</div>
         <h3>SIEM Correlation — Instructor Guide</h3>
         <p class="lede">Companion guide for the practice module. Learning objectives, full attack walkthroughs, common student misconceptions, discussion prompts, and rubrics for each scenario.</p>
@@ -385,7 +399,7 @@
           <strong>For instructors</strong>
           Per-scenario teaching notes · Common pitfalls and misconceptions · Suggested discussion arcs · Calibrated assessment rubrics · Pacing recommendations
         </div>
-        <span class="open-link">Open guide</span>
+        <span class="open-link">Open guide<span class="sr-only"> (opens in new tab)</span></span>
       </a>
 
     </div>
@@ -394,7 +408,7 @@
   <!-- ===================== ABOUT / USAGE ===================== -->
   <div class="info-panel">
     <h3>About these modules</h3>
-    <p>Each file is a self-contained single-file HTML lesson — no external scripts, no external stylesheets, no CDN dependencies. They embed cleanly in Canvas (and other LMS platforms), open directly in any modern browser, and work offline once downloaded.</p>
+    <p>Each file is a self-contained single-file HTML lesson — no external scripts, no external stylesheets, no CDN dependencies. They embed cleanly in Canvas (and other LMS platforms), open directly in any modern browser, and work offline once downloaded. Module links open in a new browser tab so this index stays available as a hub.</p>
     <p>All modules support light and dark mode automatically, honor <code>prefers-reduced-motion</code>, meet WCAG 2.1 AA contrast and tap-target targets, and use a CSP-safe scripting pattern (no inline event handlers) so they survive strict Content Security Policies in LMS iframes.</p>
   </div>
 
