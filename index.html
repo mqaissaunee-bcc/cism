@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Interactive learning modules for cybersecurity education — CISM-to-AAISM AI Bridge series and SIEM Correlation Practice for SOC analyst training. Built for the NCyTE CISM Course at Brookdale Community College.">
+<title>Cybersecurity Learning Modules — NCyTE CISM Course</title>
+<style>
+  :root {
+    --primary: #1F4E79;
+    --primary-light: #2E75B6;
+    --primary-lighter: #5B9BD5;
+    --accent: #E8A33D;
+    --bg: #F5F7FA;
+    --surface: #FFFFFF;
+    --ink: #1A2332;
+    --ink-soft: #4A5568;
+    --line: #D8E1EA;
+    --success: #2F855A;
+    --warning: #C05621;
+    --danger: #C53030;
+    --shade: #EAF3FB;
+    --shade-2: #F0F6FC;
+    --shadow: 0 2px 8px rgba(31, 78, 121, 0.08);
+    --shadow-lg: 0 6px 24px rgba(31, 78, 121, 0.14);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --primary: #5B9BD5;
+      --primary-light: #7AB3DD;
+      --primary-lighter: #2E75B6;
+      --accent: #F0B95C;
+      --bg: #0F1620;
+      --surface: #1A2332;
+      --ink: #E8EEF5;
+      --ink-soft: #B0BCC9;
+      --line: #2D3B4D;
+      --shade: #1F2C3D;
+      --shade-2: #243245;
+      --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 6px 24px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Calibri", Roboto, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.65;
+    font-size: 16px;
+  }
+
+  a:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  /* ============ HEADER ============ */
+  header.site {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: #fff;
+    padding: 3rem 2rem 2.5rem;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+  }
+  header.site .eyebrow {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    opacity: 0.85;
+    margin-bottom: 0.5rem;
+  }
+  header.site h1 {
+    margin: 0.25rem 0;
+    font-size: 2.6rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  header.site .subtitle {
+    font-size: 1.1rem;
+    opacity: 0.92;
+    margin-top: 0.5rem;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ============ MAIN LAYOUT ============ */
+  main {
+    max-width: 1200px;
+    margin: 2.5rem auto;
+    padding: 0 1.5rem 4rem;
+  }
+
+  /* ============ COLLECTION SECTION ============ */
+  .collection {
+    margin-bottom: 3rem;
+  }
+  .collection-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--line);
+  }
+  .collection-header h2 {
+    color: var(--primary);
+    font-size: 1.75rem;
+    margin: 0;
+    line-height: 1.3;
+  }
+  .collection-header .tag {
+    background: var(--shade);
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 0.3rem 0.7rem;
+    border-radius: 4px;
+  }
+  .collection-intro {
+    color: var(--ink-soft);
+    font-size: 1rem;
+    margin: 0 0 1.5rem;
+    max-width: 820px;
+  }
+
+  /* ============ MODULE CARDS ============ */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+  .module-card {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 1.75rem;
+    box-shadow: var(--shadow);
+    border-top: 4px solid var(--primary-light);
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .module-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-top-color: var(--accent);
+  }
+  .module-card.accent { border-top-color: var(--accent); }
+  .module-card.accent:hover { border-top-color: var(--primary-light); }
+
+  .module-card .card-eyebrow {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-soft);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  .module-card h3 {
+    color: var(--primary);
+    font-size: 1.25rem;
+    margin: 0 0 0.5rem;
+    line-height: 1.35;
+  }
+  .module-card .lede {
+    font-size: 0.92rem;
+    color: var(--ink);
+    margin: 0 0 1rem;
+    flex-grow: 1;
+  }
+  .module-card .meta-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .module-card .meta-list li {
+    background: var(--shade-2);
+    color: var(--ink-soft);
+    font-size: 0.75rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    font-weight: 500;
+  }
+  .module-card .topics {
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    margin: 0 0 1rem;
+    border-top: 1px solid var(--line);
+    padding-top: 0.75rem;
+  }
+  .module-card .topics strong {
+    color: var(--primary);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .module-card .open-link {
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.92rem;
+    margin-top: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .module-card:hover .open-link {
+    color: var(--accent);
+  }
+  .module-card .open-link::after {
+    content: "→";
+    transition: transform 0.18s ease;
+  }
+  .module-card:hover .open-link::after {
+    transform: translateX(4px);
+  }
+
+  /* Special two-card row for paired modules (e.g., part 1 + part 2, practice + guide) */
+  .card-pair {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  /* ============ INFO PANEL ============ */
+  .info-panel {
+    background: var(--shade);
+    border-left: 5px solid var(--primary-light);
+    padding: 1.25rem 1.5rem;
+    border-radius: 0 8px 8px 0;
+    margin: 2.5rem 0;
+  }
+  .info-panel h3 {
+    color: var(--primary);
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+  }
+  .info-panel p {
+    margin: 0.4rem 0;
+    font-size: 0.92rem;
+  }
+
+  /* ============ FOOTER ============ */
+  footer {
+    background: var(--primary);
+    color: rgba(255,255,255,0.85);
+    text-align: center;
+    padding: 2rem 1rem;
+    font-size: 0.85rem;
+  }
+  footer .program { color: #FFE082; font-weight: 600; }
+  footer p { margin: 0.4rem 0; }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 768px) {
+    header.site { padding: 2rem 1rem 1.75rem; }
+    header.site h1 { font-size: 1.8rem; }
+    main { padding: 0 1rem 3rem; }
+    .card-pair { grid-template-columns: 1fr; }
+    .collection-header h2 { font-size: 1.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="eyebrow">NCyTE CISM Course · Brookdale Community College</div>
+  <h1>Cybersecurity Learning Modules</h1>
+  <div class="subtitle">Interactive, single-file HTML lessons for security management, AI governance, and SOC analyst training. Designed for Canvas embedding, self-paced study, and instructor-led delivery.</div>
+</header>
+
+<main>
+
+  <!-- ===================== CISM → AAISM AI BRIDGE ===================== -->
+  <section class="collection" aria-labelledby="bridge-heading">
+    <div class="collection-header">
+      <span class="tag">Bridge Series</span>
+      <h2 id="bridge-heading">CISM → AAISM AI Bridge</h2>
+    </div>
+    <p class="collection-intro">
+      A two-part bridge module designed for CISM-credentialed professionals extending into ISACA's Advanced in AI Security Management (AAISM) territory. The pair maps where the CISM playbook still works, where it needs new content, and where AI introduces genuinely novel governance and threat dimensions.
+    </p>
+
+    <div class="card-pair">
+
+      <a class="module-card" href="cism-ai-bridge-part1.html">
+        <div class="card-eyebrow">Part 1 of 2</div>
+        <h3>AI Governance &amp; Risk Management</h3>
+        <p class="lede">Where CISM ends, AAISM begins. Frameworks, regulation, AI risk taxonomy, shadow AI, vendor and supply chain management, and acceptable use.</p>
+        <ul class="meta-list">
+          <li>9 modules + capstone</li>
+          <li>6–8 hours</li>
+          <li>Intermediate–Advanced</li>
+        </ul>
+        <div class="topics">
+          <strong>Covers</strong>
+          NIST AI RMF · ISO/IEC 42001 · EU AI Act risk-tier classifier · AI risk taxonomy matcher · Shadow AI scenarios · Vendor risk workshop · AI Acceptable Use Policy · TerraHealth Insurance capstone
+        </div>
+        <span class="open-link">Open module</span>
+      </a>
+
+      <a class="module-card accent" href="cism-ai-bridge-part2.html">
+        <div class="card-eyebrow">Part 2 of 2</div>
+        <h3>AI Threats, Controls &amp; Incident Response</h3>
+        <p class="lede">The operational side of the bridge. Threat landscape, security architecture, data lifecycle controls, red-teaming, and AI-specific incident response.</p>
+        <ul class="meta-list">
+          <li>9 modules + tabletop capstone</li>
+          <li>6–8 hours</li>
+          <li>Intermediate–Advanced</li>
+        </ul>
+        <div class="topics">
+          <strong>Covers</strong>
+          OWASP LLM Top 10 (2025) · MITRE ATLAS · AI defense-in-depth · AIBOM &amp; model cards · AI red-teaming · NIST 800-61 for AI · Three-scenario tabletop (deepfake, prompt injection, model poisoning)
+        </div>
+        <span class="open-link">Open module</span>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ===================== SIEM CORRELATION PRACTICE ===================== -->
+  <section class="collection" aria-labelledby="siem-heading">
+    <div class="collection-header">
+      <span class="tag">SOC Analyst Training</span>
+      <h2 id="siem-heading">SIEM Correlation Practice</h2>
+    </div>
+    <p class="collection-intro">
+      A hands-on SOC Tier-1 training module: ten interactive scenarios where students identify attack chains hidden inside streams of routine network and security telemetry. Paired instructor companion covers learning objectives, attack walkthroughs, common misconceptions, discussion prompts, and assessment rubrics.
+    </p>
+
+    <div class="card-pair">
+
+      <a class="module-card" href="siem-correlation-practice.html">
+        <div class="card-eyebrow">Student Module</div>
+        <h3>SIEM Correlation Practice</h3>
+        <p class="lede">Ten interactive log-correlation scenarios. Read the console, pick the malicious events, build the attack chain. Designed to develop the pattern recognition core to SOC Tier-1 work.</p>
+        <ul class="meta-list">
+          <li>10 scenarios</li>
+          <li>Self-paced</li>
+          <li>SOC Tier 1</li>
+        </ul>
+        <div class="topics">
+          <strong>Skills practiced</strong>
+          Log analysis · Indicator pivoting · Attack-chain reconstruction · Distinguishing routine vs. malicious telemetry · MITRE ATT&amp;CK mapping
+        </div>
+        <span class="open-link">Open module</span>
+      </a>
+
+      <a class="module-card accent" href="siem-correlation-instructor-guide.html">
+        <div class="card-eyebrow">Instructor Companion</div>
+        <h3>SIEM Correlation — Instructor Guide</h3>
+        <p class="lede">Companion guide for the practice module. Learning objectives, full attack walkthroughs, common student misconceptions, discussion prompts, and rubrics for each scenario.</p>
+        <ul class="meta-list">
+          <li>10 scenario walkthroughs</li>
+          <li>Discussion prompts</li>
+          <li>Rubrics</li>
+        </ul>
+        <div class="topics">
+          <strong>For instructors</strong>
+          Per-scenario teaching notes · Common pitfalls and misconceptions · Suggested discussion arcs · Calibrated assessment rubrics · Pacing recommendations
+        </div>
+        <span class="open-link">Open guide</span>
+      </a>
+
+    </div>
+  </section>
+
+  <!-- ===================== ABOUT / USAGE ===================== -->
+  <div class="info-panel">
+    <h3>About these modules</h3>
+    <p>Each file is a self-contained single-file HTML lesson — no external scripts, no external stylesheets, no CDN dependencies. They embed cleanly in Canvas (and other LMS platforms), open directly in any modern browser, and work offline once downloaded.</p>
+    <p>All modules support light and dark mode automatically, honor <code>prefers-reduced-motion</code>, meet WCAG 2.1 AA contrast and tap-target targets, and use a CSP-safe scripting pattern (no inline event handlers) so they survive strict Content Security Policies in LMS iframes.</p>
+  </div>
+
+</main>
+
+<footer>
+  <p><strong>Cybersecurity Learning Modules</strong></p>
+  <p>Built for the <span class="program">NCyTE CISM Course</span> · Department of Engineering &amp; Technology · Brookdale Community College · 2026</p>
+</footer>
+
+</body>
+</html>
