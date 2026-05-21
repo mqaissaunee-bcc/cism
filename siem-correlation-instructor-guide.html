@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instructor Guide — SIEM Correlation Practice</title>
+<meta name="description" content="Instructor companion guide for the SIEM Correlation Practice module. Learning objectives, attack walkthroughs, common student misconceptions, discussion prompts, and assessment rubrics for 10 SOC analyst training scenarios.">
+<style>
+  :root {
+    --bg: #faf8f3;
+    --bg-panel: #ffffff;
+    --bg-sidebar: #2a2520;
+    --bg-sidebar-hover: #3a342d;
+    --bg-sidebar-active: #4a3f33;
+    --bg-callout: #fff8e7;
+    --bg-callout-border: #e6c98b;
+    --bg-misconception: #fdf0ed;
+    --bg-misconception-border: #d4796a;
+    --bg-code: #f5f1ea;
+    --bg-rubric: #f0f4ea;
+    --bg-rubric-border: #a8c47e;
+
+    --fg: #2a2520;
+    --fg-muted: #6b5f52;
+    --fg-sidebar: #d4c8b8;
+    --fg-sidebar-muted: #8a7e6f;
+    --fg-sidebar-active: #faf8f3;
+
+    --accent: #8b4513;
+    --accent-hover: #6b3410;
+    --accent-light: #c4956a;
+
+    --rule: #d8cfc0;
+    --rule-strong: #b8a890;
+
+    --diff-beginner: #4a7c3e;
+    --diff-intermediate: #b8861f;
+    --diff-advanced: #a8412a;
+
+    --radius: 6px;
+    --radius-sm: 3px;
+
+    --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
+    --font-body: Charter, 'Bitstream Charter', 'Iowan Old Style', Georgia, serif;
+    --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1612;
+      --bg-panel: #221d18;
+      --bg-sidebar: #0f0c09;
+      --bg-sidebar-hover: #1c1814;
+      --bg-sidebar-active: #2d251c;
+      --bg-callout: #2d2415;
+      --bg-callout-border: #8a6a2a;
+      --bg-misconception: #2e1a15;
+      --bg-misconception-border: #8a3a2a;
+      --bg-code: #15110d;
+      --bg-rubric: #1a2415;
+      --bg-rubric-border: #5a7a3a;
+
+      --fg: #e8dfd0;
+      --fg-muted: #a89878;
+      --fg-sidebar: #d4c8b8;
+      --fg-sidebar-muted: #7a6e5f;
+      --fg-sidebar-active: #faf8f3;
+
+      --accent: #d4956a;
+      --accent-hover: #e8a878;
+      --accent-light: #8b6a4a;
+
+      --rule: #3a3228;
+      --rule-strong: #5a4f42;
+
+      --diff-beginner: #7ab06a;
+      --diff-intermediate: #e0b048;
+      --diff-advanced: #d47a5a;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.7;
+    font-size: 17px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--accent);
+    color: #fff;
+    padding: 8px 14px;
+    z-index: 100;
+    text-decoration: none;
+    border-radius: 0 0 var(--radius-sm) 0;
+    font-family: var(--font-sans);
+  }
+  .skip-link:focus { left: 0; }
+
+  /* Layout */
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: 100vh;
+  }
+
+  /* Sidebar */
+  .sidebar {
+    background: var(--bg-sidebar);
+    color: var(--fg-sidebar);
+    padding: 24px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    border-right: 1px solid var(--rule);
+  }
+
+  .sidebar-brand {
+    padding: 0 22px 18px;
+    border-bottom: 1px solid rgba(212, 200, 184, 0.12);
+    margin-bottom: 12px;
+  }
+  .sidebar-brand .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+    color: var(--fg-sidebar-muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .sidebar-brand h1 {
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--fg-sidebar-active);
+    margin: 0;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+  .sidebar-brand .subtitle {
+    font-style: italic;
+    font-size: 0.85rem;
+    color: var(--fg-sidebar-muted);
+    margin-top: 4px;
+  }
+
+  .sidebar-section {
+    padding: 14px 22px 6px;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.16em;
+    color: var(--fg-sidebar-muted);
+    text-transform: uppercase;
+  }
+
+  .sidebar-nav { padding: 0; margin: 0; list-style: none; }
+  .sidebar-nav li { margin: 0; }
+
+  .sidebar-nav button {
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    color: var(--fg-sidebar);
+    border: none;
+    border-left: 3px solid transparent;
+    padding: 10px 22px 10px 19px;
+    font-family: var(--font-body);
+    font-size: 0.92rem;
+    line-height: 1.35;
+    cursor: pointer;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    transition: background 0.12s, border-color 0.12s;
+    min-height: 44px;
+  }
+  .sidebar-nav button:hover {
+    background: var(--bg-sidebar-hover);
+  }
+  .sidebar-nav button.active {
+    background: var(--bg-sidebar-active);
+    color: var(--fg-sidebar-active);
+    border-left-color: var(--accent);
+  }
+  .sidebar-nav button:focus-visible {
+    outline: 2px solid var(--accent-light);
+    outline-offset: -2px;
+  }
+  .sidebar-nav .num {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--fg-sidebar-muted);
+    flex-shrink: 0;
+    min-width: 22px;
+  }
+  .sidebar-nav button.active .num { color: var(--accent-light); }
+
+  /* Main content */
+  .content {
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  article {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 56px 48px 80px;
+  }
+
+  /* Section dividers */
+  .article-header {
+    border-bottom: 2px solid var(--rule-strong);
+    padding-bottom: 24px;
+    margin-bottom: 36px;
+  }
+  .article-header .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    color: var(--fg-muted);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .article-header h1 {
+    font-family: var(--font-display);
+    font-size: clamp(1.7rem, 3.4vw, 2.3rem);
+    font-weight: 500;
+    margin: 0 0 12px;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+  }
+  .article-header .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+  }
+  .article-header .chip {
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    background: var(--bg-panel);
+    border: 1px solid var(--rule);
+    color: var(--fg-muted);
+  }
+  .chip.diff-1 { background: rgba(74, 124, 62, 0.12); color: var(--diff-beginner); border-color: transparent; }
+  .chip.diff-2 { background: rgba(184, 134, 31, 0.14); color: var(--diff-intermediate); border-color: transparent; }
+  .chip.diff-3 { background: rgba(168, 65, 42, 0.14); color: var(--diff-advanced); border-color: transparent; }
+
+  /* Section headings */
+  h2.section {
+    font-family: var(--font-display);
+    font-size: 1.45rem;
+    font-weight: 500;
+    margin: 38px 0 14px;
+    letter-spacing: -0.01em;
+    color: var(--fg);
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 6px;
+  }
+  h2.section:first-of-type { margin-top: 0; }
+  h3.subsection {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 24px 0 8px;
+    color: var(--fg);
+  }
+
+  p { margin: 0 0 14px; }
+  p:last-child { margin-bottom: 0; }
+
+  strong { font-weight: 600; }
+  em { font-style: italic; }
+
+  /* Drop cap on opening paragraph */
+  .lede::first-letter {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 3.2em;
+    float: left;
+    line-height: 0.85;
+    margin: 6px 8px 0 0;
+    color: var(--accent);
+  }
+
+  /* Code & inline mono */
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.86em;
+    background: var(--bg-code);
+    padding: 1px 6px;
+    border-radius: var(--radius-sm);
+    color: var(--fg);
+  }
+
+  /* Lists */
+  ul, ol { padding-left: 24px; margin: 0 0 14px; }
+  ul li, ol li { margin-bottom: 6px; }
+  ul li::marker { color: var(--accent); }
+  ol li::marker { color: var(--accent); font-family: var(--font-mono); font-weight: 600; }
+
+  /* Callout boxes */
+  .callout {
+    background: var(--bg-callout);
+    border-left: 4px solid var(--bg-callout-border);
+    padding: 14px 18px;
+    margin: 18px 0;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 0.95rem;
+  }
+  .callout .label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--fg-muted);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+
+  .misconception {
+    background: var(--bg-misconception);
+    border-left: 4px solid var(--bg-misconception-border);
+    padding: 12px 18px;
+    margin: 14px 0;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 0.93rem;
+  }
+  .misconception .heading {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--bg-misconception-border);
+    margin-bottom: 4px;
+  }
+  .misconception .heading::before {
+    content: "⚠ ";
+    margin-right: 4px;
+  }
+
+  .rubric {
+    background: var(--bg-rubric);
+    border-left: 4px solid var(--bg-rubric-border);
+    padding: 14px 18px;
+    margin: 18px 0;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 0.93rem;
+  }
+
+  /* Discussion prompt list */
+  .prompts {
+    list-style: none;
+    padding: 0;
+    counter-reset: prompt;
+    margin: 14px 0;
+  }
+  .prompts li {
+    counter-increment: prompt;
+    padding: 10px 14px 10px 48px;
+    position: relative;
+    background: var(--bg-panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+  }
+  .prompts li::before {
+    content: counter(prompt);
+    position: absolute;
+    left: 14px;
+    top: 10px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--accent);
+    font-weight: 700;
+    background: var(--bg-code);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Kill chain table */
+  .killchain {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-family: var(--font-sans);
+    font-size: 0.88rem;
+  }
+  .killchain th, .killchain td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  .killchain th {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    font-weight: 600;
+    border-bottom-color: var(--rule-strong);
+  }
+  .killchain .stage {
+    font-family: var(--font-mono);
+    color: var(--accent);
+    font-weight: 600;
+    white-space: nowrap;
+    font-size: 0.78rem;
+  }
+
+  /* Pacing block */
+  .pacing {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 14px;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    margin: 14px 0;
+    padding: 14px 18px;
+    background: var(--bg-panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-sm);
+  }
+  .pacing dt {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .pacing dd { margin: 0; }
+
+  /* Print */
+  @media print {
+    .sidebar { display: none; }
+    .layout { grid-template-columns: 1fr; }
+    article { max-width: none; padding: 24px; }
+    .article-header h1 { page-break-after: avoid; }
+    h2.section { page-break-after: avoid; }
+    .callout, .misconception, .rubric { page-break-inside: avoid; }
+  }
+
+  /* Mobile */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar {
+      position: relative;
+      height: auto;
+      padding: 14px 0;
+    }
+    .sidebar-brand { padding-bottom: 12px; }
+    article { padding: 32px 22px 56px; }
+    body { font-size: 16px; }
+    .lede::first-letter { font-size: 2.6em; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Print button */
+  .toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .toolbar button {
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    padding: 8px 14px;
+    min-height: 36px;
+    background: var(--bg-panel);
+    color: var(--fg);
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .toolbar button:hover { background: var(--bg-code); }
+  .toolbar button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  footer.guide-footer {
+    margin-top: 56px;
+    padding-top: 22px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    color: var(--fg-muted);
+    text-align: center;
+  }
+  footer.guide-footer .program { font-weight: 600; color: var(--fg); }
+</style>
+</head>
+<body>
+<a href="#main" class="skip-link">Skip to main content</a>
+
+<div class="layout">
+  <aside class="sidebar" aria-label="Guide navigation">
+    <div class="sidebar-brand">
+      <div class="eyebrow">Instructor Companion</div>
+      <h1>SIEM Correlation Practice</h1>
+      <div class="subtitle">A teaching guide</div>
+    </div>
+
+    <div class="sidebar-section">Front Matter</div>
+    <ul class="sidebar-nav" role="tablist">
+      <li><button type="button" data-section="overview" role="tab"><span class="num">i</span><span>Using This Guide</span></button></li>
+    </ul>
+
+    <div class="sidebar-section">Scenarios</div>
+    <ul class="sidebar-nav" id="scenarioNav" role="tablist"></ul>
+
+    <div class="sidebar-section">Back Matter</div>
+    <ul class="sidebar-nav">
+      <li><button type="button" data-section="rubric" role="tab"><span class="num">A</span><span>Assessment Rubric</span></button></li>
+      <li><button type="button" data-section="mapping" role="tab"><span class="num">B</span><span>MITRE ATT&amp;CK Mapping</span></button></li>
+    </ul>
+  </aside>
+
+  <main class="content" id="main">
+    <article id="article" aria-live="polite">
+      <!-- Populated by JS -->
+    </article>
+  </main>
+</div>
+
+<script>
+// ============================================================
+// CONTENT
+// ============================================================
+
+const OVERVIEW = {
+  type: "front",
+  title: "Using This Guide",
+  eyebrow: "Front Matter",
+  body: `
+    <p class="lede">This companion accompanies the <em>SIEM Correlation Practice</em> module — a ten-scenario interactive exercise in which students review streams of raw log telemetry and identify which events correlate into a coherent attack chain. The student-facing module is self-contained and self-grading; this guide exists to help you turn that practice into structured instruction.</p>
+
+    <h2 class="section">What the exercise teaches</h2>
+    <p>The mechanical skill is straightforward — clicking the right log lines. The cognitive skill underneath it is what we actually care about: <strong>pivoting on shared indicators</strong> (identity, host, IP, timestamp, process lineage) to assemble a narrative from disconnected events, while resisting the urge to flag everything that looks unusual in isolation.</p>
+
+    <p>This is the bread-and-butter activity of Tier 1 SOC work. Most real alerts are noise. The analyst's job is to recognize which noise hangs together and which is unrelated. Students who learn to correlate well develop two habits at once: <strong>healthy skepticism toward isolated alerts</strong>, and <strong>structured curiosity about timestamps and shared fields</strong>.</p>
+
+    <h2 class="section">How to use this guide</h2>
+    <p>Each scenario in the guide has the same structure:</p>
+    <ul>
+      <li><strong>Learning objectives</strong> — what students should be able to do after working the scenario.</li>
+      <li><strong>The attack chain</strong> — the events you're asking students to find, with the analytical pivots that connect them.</li>
+      <li><strong>Why the noise is there</strong> — the deliberate distractors and what makes each one tempting.</li>
+      <li><strong>Common student mistakes</strong> — what new analysts typically get wrong, and the conceptual fix.</li>
+      <li><strong>Discussion prompts</strong> — questions for full-class or small-group debrief.</li>
+      <li><strong>Pacing &amp; assessment notes</strong> — time estimates, scoring guidance, and ways to extend.</li>
+    </ul>
+
+    <h2 class="section">Suggested course placement</h2>
+    <p>This module fits well after students have been introduced to log sources (firewall, EDR, identity, email gateway), the basics of the Cyber Kill Chain or MITRE ATT&amp;CK framework, and the concept of indicators of compromise. It does not require hands-on SIEM tool experience — the abstraction of "click the malicious events" lets students focus on correlation logic without getting lost in Splunk SPL or Elastic queries.</p>
+
+    <p>I recommend assigning the four <em>Beginner</em> and <em>Intermediate</em> scenarios first as graded homework, then using one or two <em>Advanced</em> scenarios as in-class group work where you can listen to students reason aloud. The Advanced scenarios reward discussion in ways that solo work does not.</p>
+
+    <div class="callout">
+      <div class="label">A note on the scoring</div>
+      <p>The student module scores +10 per correctly identified malicious event and −5 per false positive, with a floor at zero. This deliberately punishes over-flagging more than under-flagging — because in real life, an analyst who flags everything is just generating new noise. If your assessment philosophy differs, you can choose to weight the scenarios manually using your own rubric (see Appendix A).</p>
+    </div>
+
+    <h2 class="section">Difficulty progression</h2>
+    <p>The scenarios are loosely ordered by difficulty, but the difficulty chips on each one are more reliable than the numeric sequence. The Advanced scenarios (4, 5, 6, 7, 9) require students to recognize specific tradecraft — Cobalt Strike beacons, Kerberoasting, DNS tunneling, supply chain compromise, LOLBin chains — that you may want to seed with a brief mini-lecture before assigning.</p>
+  `
+};
+
+const SCENARIOS = [
+  // ──────────────────────────────────────────────────────────
+  // 1. After-Hours O365
+  // ──────────────────────────────────────────────────────────
+  {
+    title: "After-Hours Office 365 Compromise",
+    difficulty: 1,
+    estMinutes: 8,
+    body: `
+      <p class="lede">A finance user logs in from a Tor exit node at 2 AM, runs base64-encoded PowerShell on their workstation, and a few minutes later 18 megabytes leave that workstation heading back to the same Tor IP. This is the warmup scenario — and it's worth slowing down on, because every analytical pattern students will need for the rest of the module appears here in its simplest form.</p>
+
+      <h2 class="section">Learning objectives</h2>
+      <p>After completing this scenario, students should be able to:</p>
+      <ul>
+        <li>Identify a shared IP address as a pivot connecting authentication events to network traffic events.</li>
+        <li>Recognize <strong>failed-then-successful authentication</strong> from the same source within seconds as a brute-force / password-spray signature.</li>
+        <li>Explain why <strong>base64-encoded PowerShell</strong> is suspicious in itself, regardless of what the encoded content does.</li>
+        <li>Distinguish routine operational telemetry (DNS-over-HTTPS, scheduled backups, marketing email) from telemetry that points to an actor.</li>
+      </ul>
+
+      <h2 class="section">The attack chain</h2>
+      <p>Four events form the chain, and all four share the IP <code>185.220.101.45</code> either as source or destination. That IP is the pivot. Once a student finds it in two events, the others become obvious.</p>
+
+      <table class="killchain">
+        <thead><tr><th>Stage</th><th>Event</th><th>Pivot</th></tr></thead>
+        <tbody>
+          <tr><td class="stage">Credential Access</td><td>14 failed O365 logins for <code>j.morgan</code> from Tor exit node</td><td>IP, user</td></tr>
+          <tr><td class="stage">Credential Access</td><td>Successful login from same IP after 33 seconds</td><td>IP, user, timing</td></tr>
+          <tr><td class="stage">Execution</td><td>Base64-encoded PowerShell on HOST-FIN-08 under <code>j.morgan</code></td><td>User, host</td></tr>
+          <tr><td class="stage">Exfiltration</td><td>18 MB encrypted outbound from HOST-FIN-08 to the same Tor IP</td><td>IP, host</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="subsection">Why the noise is there</h3>
+      <p>The DNS-over-HTTPS firewall allow is included because some students will see "encrypted DNS to a non-corporate resolver" and assume it must be exfiltration. The marketing newsletter is there because the timing (02:15:10) overlaps the chain — students need to learn that <em>temporal proximity is not correlation</em>. The nightly backup completing at 02:15:47 is the densest distractor; 412 GB is a big number, and students who anchor on data volume will flag it. The lobby printer DHCP renewal is a freebie — once they've worked it through, students laugh at having even considered it.</p>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students flag the marketing newsletter because "12,400 recipients" looks suspicious. Reframe: <em>volume alone is not anomaly</em>. The newsletter is sent via SendGrid (a sanctioned service) to recipients (presumably customers) at a time consistent with marketing automation. Without an actor or affected asset on the inside, there is no chain.</p>
+      </div>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students flag <em>k.patel's</em> VPN connection because it falls inside the attack window. The connection is from the corporate office IP at a normal location — the only thing it shares with the chain is timestamp. Use this to introduce the rule: <strong>shared time without a shared pivot field is not correlation.</strong></p>
+      </div>
+
+      <h2 class="section">Discussion prompts</h2>
+      <ol class="prompts">
+        <li>If you only had three of these four events — say, the failed logins, the successful login, and the PowerShell event — would you still call this an incident? What would you do next?</li>
+        <li>Why does the attacker care about <em>encoding</em> the PowerShell? What would the same payload look like if it were not encoded, and why would that make detection easier?</li>
+        <li>The Tor exit node here is in Estonia. Does the geography matter? When does country-of-origin matter analytically, and when is it a distraction?</li>
+        <li>If the firewall had blocked the 18 MB outbound transfer, would the rest of the chain still be a security incident? Why?</li>
+      </ol>
+
+      <h2 class="section">Pacing &amp; assessment notes</h2>
+      <dl class="pacing">
+        <dt>Estimated time</dt><dd>5–10 minutes solo, 15 minutes with debrief</dd>
+        <dt>Difficulty</dt><dd>Beginner — designed to ensure no one is lost</dd>
+        <dt>Perfect score</dt><dd>40 points (4 malicious × 10)</dd>
+        <dt>Acceptable score</dt><dd>30+ with at most one false positive</dd>
+      </dl>
+
+      <div class="rubric">
+        <p><strong>Assessment tip:</strong> If a student finishes this in under three minutes with a perfect score, ask them to explain their reasoning aloud before moving on. Some students will have pattern-matched on "the red-tinted rows" from prior experience with similar exercises — the exercise itself doesn't visually distinguish them during analysis, but the wording of malicious events ("Tor exit node," "base64-encoded," "encrypted outbound") will pull a careful reader's attention regardless. Make sure the student can articulate <em>why</em> each flagged event mattered.</p>
+      </div>
+    `
+  },
+
+  // ──────────────────────────────────────────────────────────
+  // 2. MFA Fatigue
+  // ──────────────────────────────────────────────────────────
+  {
+    title: "MFA Fatigue and the Quiet Inbox Rule",
+    difficulty: 2,
+    estMinutes: 10,
+    body: `
+      <p class="lede">An executive assistant receives twenty-two MFA push notifications in three minutes, eventually approves one, and within ninety seconds an inbox rule is silently created to redirect any reply from the CFO into the RSS Feeds folder. Two minutes later, a fraudulent wire-change email goes out to a vendor. This scenario teaches that <strong>MFA is a control, not a guarantee</strong> — and that the most dangerous attacks against identity systems target the human, not the cryptography.</p>
+
+      <h2 class="section">Learning objectives</h2>
+      <p>After completing this scenario, students should be able to:</p>
+      <ul>
+        <li>Recognize MFA push bombing (also called MFA fatigue or prompt bombing) from a burst of denied prompts followed by a single approval.</li>
+        <li>Explain why a successful MFA approval after many denies is suspicious, even though every individual event is "successful" from a technical standpoint.</li>
+        <li>Identify malicious inbox rules as a <strong>defense evasion and persistence mechanism</strong>, particularly rules that hide replies from senior executives.</li>
+        <li>Connect the dots from initial access to a business email compromise (BEC) outcome — the wire-change email.</li>
+      </ul>
+
+      <h2 class="section">The attack chain</h2>
+      <p>The pivot here is the user account <code>a.chen</code> and the IP <code>104.28.42.91</code>. The chain stretches across three log sources: the identity provider (AAD-MFA), the mailbox (EXO-MAILBOX), and the outbound mail flow. Students who only watch one source will miss the second half.</p>
+
+      <table class="killchain">
+        <thead><tr><th>Stage</th><th>Event</th><th>What it tells you</th></tr></thead>
+        <tbody>
+          <tr><td class="stage">Credential Access</td><td>MFA deny burst (4th, 9th, finally approve on 22nd attempt)</td><td>Attacker has the password; the user has the phone</td></tr>
+          <tr><td class="stage">Persistence</td><td>Inbox rule: move CFO emails to RSS Feeds, mark as read</td><td>Attacker plans to operate from this mailbox without the victim noticing replies</td></tr>
+          <tr><td class="stage">Impact (BEC)</td><td>Outbound email "URGENT - wire instructions update" to a vendor</td><td>The actual fraud — and the rule above is what makes it survivable</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="subsection">Why the noise is there</h3>
+      <p>The BBC pageview at 23:14 establishes that <code>a.chen</code> was browsing normally before the push bombing began — useful context for the analyst but not part of the chain. The toner-low printer alert is straight noise. The user <code>m.delgado's</code> normal VPN logout is included because it falls in the timeframe and an inattentive student might flag it. The OpenAI API POST at 23:31 is the most interesting distractor — some students will flag it as data exfiltration to a third-party AI service. Use it as a teaching moment: <em>access to AI APIs is not inherently malicious, and the pivot field doesn't match this chain.</em></p>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students flag only the MFA approve event (23:22:18) and miss the deny burst that preceded it. The denies <em>are</em> the attack — they show the attacker already had the password and was waiting for the user to relent. Without them, you have a successful login that looks normal; with them, you have a textbook MFA bombing chain. Press students: <em>which event would you have caught in real time if you had the right alert rule?</em></p>
+      </div>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students don't flag the inbox rule because they don't recognize it as part of the attack. To them, "user created an inbox rule" sounds like normal Outlook behavior. Walk them through the specifics: hiding CFO emails specifically, into a folder the user rarely checks, and marking them read so they don't show as unread. <em>This is not how people set up their own inbox rules.</em></p>
+      </div>
+
+      <h2 class="section">Discussion prompts</h2>
+      <ol class="prompts">
+        <li>What organizational and technical countermeasures could have prevented the MFA approval? Consider both user training and platform-level controls (number matching, location-aware MFA, push frequency limits).</li>
+        <li>The inbox rule is the cleverest part of this attack. Why does the attacker bother creating it instead of just sending the fraudulent email immediately? What would happen without it?</li>
+        <li>If you were writing a SIEM detection rule for this pattern, which event(s) would you alert on? What's the trade-off between detecting earlier (more false positives) and later (smaller blast radius)?</li>
+        <li>The fraudulent email goes to "vendor-billing@acme-supply.co" — note the <code>.co</code> TLD instead of <code>.com</code>. How would the attacker have known which vendor to impersonate?</li>
+      </ol>
+
+      <h2 class="section">Pacing &amp; assessment notes</h2>
+      <dl class="pacing">
+        <dt>Estimated time</dt><dd>8–12 minutes solo, 20 minutes with debrief</dd>
+        <dt>Difficulty</dt><dd>Intermediate — three log sources, three-stage chain</dd>
+        <dt>Perfect score</dt><dd>60 points (6 malicious × 10)</dd>
+        <dt>Acceptable score</dt><dd>40+ with at most one false positive</dd>
+      </dl>
+
+      <div class="rubric">
+        <p><strong>Assessment tip:</strong> Award partial credit specifically for catching the inbox rule. Students who find the MFA burst and the wire email but miss the persistence mechanism are demonstrating exactly the gap this scenario is designed to surface. In your written feedback, point them to the <a href="https://attack.mitre.org/techniques/T1564/008/">T1564.008 (Outlook Inbox Rules)</a> technique as follow-up reading.</p>
+      </div>
+    `
+  },
+
+  // ──────────────────────────────────────────────────────────
+  // 3. Insider data theft
+  // ──────────────────────────────────────────────────────────
+  {
+    title: "Resignation, Then a Busy Afternoon",
+    difficulty: 2,
+    estMinutes: 10,
+    body: `
+      <p class="lede">A senior engineer has submitted resignation. Over the course of an afternoon they bulk-read several thousand source code files, attach a 128 GB USB drive, write four gigabytes to it, and simultaneously upload nearly the same volume to a cloud file-sharing service. This is the insider-threat scenario, and it's the one that most directly challenges students' assumption that "the attacker" is external.</p>
+
+      <h2 class="section">Learning objectives</h2>
+      <p>After completing this scenario, students should be able to:</p>
+      <ul>
+        <li>Identify insider data theft patterns: bulk access, DLP triggers, removable media, and unauthorized cloud upload.</li>
+        <li>Recognize <strong>parallel exfiltration channels</strong> (USB + cloud) as a hedging strategy used by careful insiders.</li>
+        <li>Distinguish motive (a Teams message about resignation) from action (the actual data movement).</li>
+        <li>Reason about insider scenarios without falling into either of two failure modes: assuming all employees are suspects, or assuming employees never act maliciously.</li>
+      </ul>
+
+      <h2 class="section">The attack chain</h2>
+      <p>The pivot is the user account <code>t.bauer</code> and the workstation <code>LAPTOP-T-BAUER</code>. What makes this scenario distinctive is that there is no external IP, no remote access, no compromised credentials. The user is acting in their own name on their own machine. The only thing that makes the activity malicious is its <em>pattern</em> against the context of pending departure.</p>
+
+      <table class="killchain">
+        <thead><tr><th>Stage</th><th>Event</th><th>Significance</th></tr></thead>
+        <tbody>
+          <tr><td class="stage">Collection</td><td>Bulk read of 2,847 source files, 4.3 GB</td><td>Far above this user's normal access pattern</td></tr>
+          <tr><td class="stage">Collection</td><td>DLP triggers on "CONFIDENTIAL — Source Code" label</td><td>Confirms classified data is in scope</td></tr>
+          <tr><td class="stage">Exfiltration (USB)</td><td>128 GB SanDisk USB attached, 4.1 GB copied</td><td>First channel — physical removal</td></tr>
+          <tr><td class="stage">Exfiltration (Cloud)</td><td>3.9 GB upload to MEGA</td><td>Second channel — redundancy</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="subsection">Why the noise is there</h3>
+      <p>The morning badge-in is included for two reasons: it shows normal arrival (the user wasn't already acting suspiciously) and it gives students a baseline of "what t.bauer's day looks like." The Teams message about Friday being the last day is intentionally tempting — students often flag it as part of the chain because it provides the motive. <strong>This is a teachable moment.</strong> Motive is context for an investigation; it is not itself an action. The handbook print job is innocuous (handbooks aren't classified). The calendar 1:1 with their manager is what a departing employee would normally schedule. The c.okonkwo badge-out is unrelated.</p>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students flag the Teams resignation message as part of the chain. Push back: <em>if the same Teams message had appeared without any of the other events, would you call security?</em> Telling your team you're leaving is a normal workplace event. Discuss the difference between an <strong>indicator of compromise</strong> (an action) and a <strong>contextual signal</strong> (motive, opportunity).</p>
+      </div>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students flag only the USB or only the MEGA upload, but not both. Press: <em>why would the attacker do both?</em> The answer is usually: redundancy. If the company has a DLP policy that blocks USB writes, the cloud upload is the fallback. If they block MEGA at the proxy, the USB is the fallback. Detecting both channels in the same incident is what separates a complete investigation from one that misses half the data loss.</p>
+      </div>
+
+      <h2 class="section">Discussion prompts</h2>
+      <ol class="prompts">
+        <li>Most insider threat programs intensify monitoring of employees who have given notice. Is this fair? What policy considerations balance security against trust and morale?</li>
+        <li>If your company allowed personal USB drives by policy, which of these events would still trigger an alert? Which would not?</li>
+        <li>MEGA is a legitimate file-sharing service used by many people for non-malicious purposes. What's the right detection posture: block MEGA outright, alert on large uploads to MEGA, or alert based on the user's role and the data classification involved?</li>
+        <li>How would this scenario look different if the user were acting as a contractor for a foreign intelligence service rather than as a soon-to-be-ex-employee taking work to a new job? Are the technical indicators distinguishable?</li>
+      </ol>
+
+      <h2 class="section">Pacing &amp; assessment notes</h2>
+      <dl class="pacing">
+        <dt>Estimated time</dt><dd>8–12 minutes solo, 25 minutes with debrief</dd>
+        <dt>Difficulty</dt><dd>Intermediate — easy to find events, hard to resist over-flagging</dd>
+        <dt>Perfect score</dt><dd>50 points (5 malicious × 10)</dd>
+        <dt>Acceptable score</dt><dd>35+ with at most two false positives</dd>
+      </dl>
+
+      <div class="rubric">
+        <p><strong>Assessment tip:</strong> If you have time, follow this scenario with a brief discussion of the ethical and legal frameworks around insider monitoring — particularly the distinction between monitoring under acceptable use policies that employees have signed and the constraints that apply when data classification, healthcare information, or union-represented employees are involved. The technical exercise is half of insider threat work; the policy reasoning is the other half.</p>
+      </div>
+    `
+  },
+
+  // ──────────────────────────────────────────────────────────
+  // 4. Ransomware staging
+  // ──────────────────────────────────────────────────────────
+  {
+    title: "Domain Controller, Saturday Night",
+    difficulty: 3,
+    estMinutes: 18,
+    body: `
+      <p class="lede">It is Saturday at 11 PM. A malicious Word document spawns rundll32, which beacons out every sixty seconds to a Cobalt Strike C2 server. The actor enumerates Active Directory, pivots to the domain controller using a stolen service account, and finally deletes shadow copies and backup catalogs — the last housekeeping step before they encrypt everything. This scenario is the most demanding in the module, and it rewards careful instruction beforehand.</p>
+
+      <h2 class="section">Learning objectives</h2>
+      <p>After completing this scenario, students should be able to:</p>
+      <ul>
+        <li>Recognize a <strong>five-stage ransomware staging pattern</strong>: macro execution, C2 beaconing, AD reconnaissance, lateral movement, and recovery destruction.</li>
+        <li>Identify suspicious process lineage — specifically <code>winword.exe → rundll32.exe</code> — as a hallmark of malicious Office macros.</li>
+        <li>Recognize regular-interval beaconing (60 seconds in this case) as a Cobalt Strike fingerprint.</li>
+        <li>Explain why <code>vssadmin delete shadows</code> and <code>wbadmin delete catalog</code> are virtually always malicious in non-administrative contexts.</li>
+        <li>Articulate why <strong>off-hours timing</strong> is a deliberate operational choice for ransomware actors.</li>
+      </ul>
+
+      <h2 class="section">The attack chain</h2>
+      <p>Seven events form the chain across five stages. The pivot fields are the host <code>HOST-HR-12</code>, the C2 IP <code>23.106.215.77</code>, and the service account <code>svc_backup</code>. This is the first scenario where the chain crosses <em>multiple hosts</em> — the attacker moves laterally from HR-12 to DC-01 — and students who haven't internalized that pivot fields can be hosts as well as users will struggle.</p>
+
+      <table class="killchain">
+        <thead><tr><th>Stage</th><th>Event</th><th>Tradecraft</th></tr></thead>
+        <tbody>
+          <tr><td class="stage">Execution</td><td><code>winword.exe</code> → <code>rundll32.exe</code> on HR-12</td><td>Office macro payload</td></tr>
+          <tr><td class="stage">Command &amp; Control</td><td>60-second beacon to 23.106.215.77</td><td>Cobalt Strike default jitter</td></tr>
+          <tr><td class="stage">Discovery</td><td><code>net group "Domain Admins"</code>, <code>nltest /dclist</code></td><td>AD enumeration LOLBins</td></tr>
+          <tr><td class="stage">Lateral Movement</td><td>Network logon to DC-01 as <code>svc_backup</code></td><td>Service account pivot</td></tr>
+          <tr><td class="stage">Impact (prep)</td><td><code>vssadmin delete shadows</code>, <code>wbadmin delete catalog</code></td><td>Destroying recovery options</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="subsection">Why the noise is there</h3>
+      <p>The cached DNS query at 22:48 is the warm-up — it establishes that DNS is working normally and gives students a baseline. The successful Veeam backup completion (22:58 (sic) — 23:02) is included precisely because of its name proximity to the malicious <code>wbadmin</code> command twenty seconds earlier; students need to learn that the SIEM doesn't care whether things <em>sound related</em>. The lobby printer cartridge swap and the guest VLAN DHCP offer at the end are routine.</p>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students flag the Veeam backup completion at 23:02:02 because it's sandwiched between the two recovery-destruction commands. This is the most pedagogically valuable false positive in the entire module. Veeam <em>completing successfully</em> is a normal, scheduled event — the attacker hasn't touched it. The events that bracket it are malicious; this one isn't. Use this to drive home: <em>position in the log stream is not evidence of involvement.</em></p>
+      </div>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students don't recognize <code>net group "Domain Admins"</code> as malicious. Many students have used <code>net</code> commands themselves — perhaps in a lab — and don't see them as suspicious. The key is <em>who is running it and where</em>. A help desk technician on an admin workstation running <code>net group</code> is doing their job. A user-context process on an HR endpoint running it after a macro execution is reconnaissance.</p>
+      </div>
+
+      <h2 class="section">Discussion prompts</h2>
+      <ol class="prompts">
+        <li>Why does the attacker do all of this on a Saturday at 11 PM? Make a list of the operational advantages, including ones that aren't immediately obvious (staffing, response time, time zones, weekend patch windows).</li>
+        <li>The attacker uses the <code>svc_backup</code> service account to log into the domain controller. Where did they get those credentials? What's the most likely path between the macro execution on HR-12 and possession of that account's hash?</li>
+        <li>If the SIEM had a detection rule for <code>vssadmin delete shadows</code> with a five-minute alert SLA, how much of the attack would already have happened by the time anyone responded? What's the actual goal of such a detection — prevention or forensics?</li>
+        <li>Cobalt Strike's default beacon interval is configurable; mature actors will randomize it. If the attacker had used jittered intervals between 30 seconds and 5 minutes instead of clean 60-second intervals, which event in this chain would have been the first to catch your eye instead?</li>
+      </ol>
+
+      <h2 class="section">Pacing &amp; assessment notes</h2>
+      <dl class="pacing">
+        <dt>Estimated time</dt><dd>15–25 minutes solo, 35 minutes with full debrief</dd>
+        <dt>Difficulty</dt><dd>Advanced — seven malicious events, two hosts, multiple log sources</dd>
+        <dt>Perfect score</dt><dd>70 points (7 malicious × 10)</dd>
+        <dt>Acceptable score</dt><dd>50+ with at most two false positives</dd>
+      </dl>
+
+      <div class="rubric">
+        <p><strong>Assessment tip:</strong> This scenario benefits enormously from a brief (10-minute) pre-lecture on the modern ransomware operator playbook: initial access via phishing, hands-on-keyboard activity from a C2 implant, AD recon, lateral movement to high-value targets, and the destruction of backups as a precondition for ransom leverage. Students who understand the <em>why</em> of the attack chain find the events much faster than students who are pattern-matching event by event.</p>
+      </div>
+    `
+  },
+
+  // ──────────────────────────────────────────────────────────
+  // 5. Supply chain npm
+  // ──────────────────────────────────────────────────────────
+  {
+    title: "The CI Pipeline That Phoned Home",
+    difficulty: 3,
+    estMinutes: 15,
+    body: `
+      <p class="lede">A developer pushes a routine dependency update. The build pipeline runs <code>npm install</code> and pulls down 1,247 packages — including, transitively, a compromised version of <code>flatmap-stream</code> via <code>event-stream</code>. Within thirty seconds, the build agent is spawning hidden PowerShell, beaconing to attacker infrastructure, and reading the AWS deploy key from the secrets vault. The pipeline status is <strong>SUCCESS</strong>. This scenario teaches that <em>your build infrastructure is part of your attack surface</em>.</p>
+
+      <h2 class="section">Learning objectives</h2>
+      <p>After completing this scenario, students should be able to:</p>
+      <ul>
+        <li>Recognize supply chain compromise via a malicious transitive dependency.</li>
+        <li>Identify suspicious process lineage in CI contexts — specifically <code>node.exe → powershell.exe</code> with hidden window arguments.</li>
+        <li>Reason about why a build agent reading a deployment secret is suspicious <em>even though that's exactly what a build agent does</em> — the difference is who is asking.</li>
+        <li>Explain why the malicious code is engineered <em>not</em> to break the build (so the developer never investigates).</li>
+      </ul>
+
+      <h2 class="section">The attack chain</h2>
+      <p>Five malicious events. The pivot here is the CI runner host <code>runner-04</code>. The chain begins inside an action that's invisible to most security tooling — <code>npm install</code> running a postinstall script — and ends with secrets in the attacker's possession. This is based on the real 2018 <code>event-stream</code> compromise; you can cite the original incident if you want students to dig deeper.</p>
+
+      <table class="killchain">
+        <thead><tr><th>Stage</th><th>Event</th><th>Why it's the chain, not the noise</th></tr></thead>
+        <tbody>
+          <tr><td class="stage">Initial Access</td><td>Download of <code>event-stream</code> from npm</td><td>Compromised package (real incident)</td></tr>
+          <tr><td class="stage">Initial Access</td><td>Download of <code>flatmap-stream</code> (transitive)</td><td>The actual malicious code</td></tr>
+          <tr><td class="stage">Execution</td><td><code>node.exe</code> spawns <code>powershell -nop -w hidden</code></td><td>Hidden PowerShell during install is anomalous in CI</td></tr>
+          <tr><td class="stage">Command &amp; Control</td><td>Outbound to 45.61.169.32:8443, low volume, periodic</td><td>Implant callback</td></tr>
+          <tr><td class="stage">Credential Access</td><td>Vault read of <code>AWS_DEPLOY_KEY</code></td><td>The objective</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="subsection">Why the noise is there</h3>
+      <p>The legitimate <code>react</code> download is included because students need to learn that pulling packages from npm is not by itself malicious — most packages are fine. The pipeline's eventual <strong>SUCCESS</strong> status is the most important piece of noise; the malicious code didn't crash the build, which means there's no developer-facing signal that anything is wrong. The unrelated Dependabot PR merge at the end is straightforward noise.</p>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students flag the legitimate React download because it's another npm download. Press: <em>what would you flag if the only thing in your logs were package downloads?</em> The answer should be "nothing without further context." React is not a known-bad package; event-stream/flatmap-stream are (or were). This is a teaching moment about <strong>indicators</strong> versus <strong>activities</strong>.</p>
+      </div>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students don't flag the vault read because "the CI runner is supposed to read deploy keys." Walk them through the cause-and-effect chain: a postinstall hook from a third-party package, running before any of the project's own code executes, is reaching into the vault. The vault read is legitimate <em>for the pipeline as a whole</em> but illegitimate <em>from this caller</em>. Modern vault systems can scope reads to specific stages; this scenario implies the vault permission was too broad.</p>
+      </div>
+
+      <h2 class="section">Discussion prompts</h2>
+      <ol class="prompts">
+        <li>What controls would have prevented this attack? Consider package pinning, lockfile review, runtime sandboxing of install scripts, network egress restrictions on CI runners, and vault scoping.</li>
+        <li>The malicious code is in a transitive dependency, not a direct one. The developer who pushed this PR never typed the name "flatmap-stream." How does this change the responsibility for the incident? Is the developer at fault?</li>
+        <li>Real CI/CD pipelines run untrusted code (other people's packages) with privileged credentials (deploy keys). What architectural change would eliminate this category of attack entirely — and what trade-offs would it impose?</li>
+        <li>The attack was successful in part because the build still passed. If you were writing the malicious package, why would you specifically ensure it doesn't break anything? What does that tell you about the attacker's threat model for their own operation?</li>
+      </ol>
+
+      <h2 class="section">Pacing &amp; assessment notes</h2>
+      <dl class="pacing">
+        <dt>Estimated time</dt><dd>12–18 minutes solo, 30 minutes with debrief</dd>
+        <dt>Difficulty</dt><dd>Advanced — requires familiarity with CI/CD concepts</dd>
+        <dt>Perfect score</dt><dd>50 points (5 malicious × 10)</dd>
+        <dt>Acceptable score</dt><dd>35+ with at most one false positive</dd>
+      </dl>
+
+      <div class="rubric">
+        <p><strong>Assessment tip:</strong> Students from a pure networking background may struggle with this one because the attack surface is unfamiliar — they've not thought about <code>npm install</code> as an attack vector. Consider pairing this with a short pre-reading on the 2018 event-stream incident or the 2020 SolarWinds compromise. The supply chain dimension of modern security is increasingly central to junior analyst work, and this scenario is your foot in the door for that conversation.</p>
+      </div>
+    `
+  },
+
+  // ──────────────────────────────────────────────────────────
+  // 6. DNS tunneling
+  // ──────────────────────────────────────────────────────────
+  {
+    title: "The DNS Server Is Working Overtime",
+    difficulty: 3,
+    estMinutes: 12,
+    body: `
+      <p class="lede">DNS volume is up eighteen percent this week. Most of it is normal — outlook.office365.com, github.com, slack.com. Hidden in the noise are TXT record queries with long, random-looking subdomains pointing to <code>attacker-domain.xyz</code>. Each one carries a base64-encoded chunk of stolen data, smuggled out through a protocol that almost no organization blocks. This scenario teaches that <strong>DNS is a covert channel waiting to be used</strong>.</p>
+
+      <h2 class="section">Learning objectives</h2>
+      <p>After completing this scenario, students should be able to:</p>
+      <ul>
+        <li>Recognize DNS tunneling as an exfiltration technique that uses the DNS protocol itself as the transport.</li>
+        <li>Identify the structural fingerprint of tunneled DNS: high-entropy subdomain labels, TXT record types (or A records with unusual patterns), and repeated queries to the same parent domain.</li>
+        <li>Explain why DNS is an attractive channel for attackers: nearly always allowed outbound, often unmonitored, and recursive resolution means the attacker controls a name server that the victim's network <em>asks</em> for data.</li>
+        <li>Articulate the detection challenges: distinguishing tunneled DNS from legitimate services that use long labels (CDNs, anti-spam infrastructure).</li>
+      </ul>
+
+      <h2 class="section">The attack chain</h2>
+      <p>Four malicious queries, all of them TXT records to subdomains of <code>exfil.attacker-domain.xyz</code> from the same source IP. The pivot fields are the parent domain and the record type. This is the most homogeneous chain in the module — all four events look essentially identical — and the challenge is recognizing the pattern against the camouflage of mixed-in legitimate DNS.</p>
+
+      <table class="killchain">
+        <thead><tr><th>Stage</th><th>Event</th><th>Indicator</th></tr></thead>
+        <tbody>
+          <tr><td class="stage">Exfiltration</td><td>TXT query: <code>aGVsbG8td29ybGQtMTIz.exfil.attacker-domain.xyz</code></td><td>High-entropy subdomain, base64-shaped</td></tr>
+          <tr><td class="stage">Exfiltration</td><td>TXT query: <code>c2VjcmV0LWRhdGEtNDU2.exfil.attacker-domain.xyz</code></td><td>Same pattern, different label</td></tr>
+          <tr><td class="stage">Exfiltration</td><td>TXT query: <code>cGFzc3dvcmRzLWR1bXA3ODk.exfil.attacker-domain.xyz</code></td><td>Same pattern</td></tr>
+          <tr><td class="stage">Exfiltration</td><td>TXT query: <code>ZmluYWwtY2h1bmstOTk5.exfil.attacker-domain.xyz</code></td><td>Same pattern</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="subsection">Why the noise is there</h3>
+      <p>Each malicious query is sandwiched between legitimate A queries to well-known destinations — Google, jsDelivr, Office 365, Microsoft telemetry, GitHub, Slack. These are exactly what real DNS traffic from a workstation looks like, and they exist in the log precisely to teach students that you cannot detect tunneling by browsing the log linearly. The detection requires <em>recognizing a different shape</em> against the background.</p>
+
+      <p>Note for the curious instructor: the base64-encoded labels in this scenario decode to "hello-world-123," "secret-data-456," "passwords-dump789," and "final-chunk-999." In a real attack, the payloads would not be human-readable. Some students will notice and decode them; reward that curiosity.</p>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students flag <em>some</em> of the TXT queries but not all, often because they get fatigued looking at long strings. Press: <em>once you've established that the pattern is malicious, why would you stop?</em> All four queries share the parent domain, the record type, and the high-entropy subdomain pattern. In real triage, finding one means alerting on the source and pulling everything that matches the pattern.</p>
+      </div>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students don't recognize the subdomain labels as base64. If your curriculum hasn't covered encoding schemes, this is a good moment to introduce them: base64 uses a fixed alphabet (A–Z, a–z, 0–9, +, /, sometimes =), produces strings with characteristic length-divisible-by-four padding, and is a near-universal indicator that something is being encoded for transport.</p>
+      </div>
+
+      <h2 class="section">Discussion prompts</h2>
+      <ol class="prompts">
+        <li>Why use TXT records specifically? What other record types could carry exfiltrated data, and what are the trade-offs (bytes per query, suspiciousness, caching behavior)?</li>
+        <li>The attacker's domain (<code>attacker-domain.xyz</code>) is registered and has working name servers. What would investigators be able to learn from WHOIS, passive DNS, and certificate transparency logs about this domain?</li>
+        <li>Legitimate services sometimes use long, random-looking subdomain labels — CDN edge nodes, ESP tracking links, anti-spam DKIM keys. How would you write a detection rule that catches DNS tunneling without drowning in false positives from these?</li>
+        <li>If your organization implemented mandatory DNS filtering through a corporate resolver that blocks queries to newly registered or low-reputation domains, how much of this attack would have been prevented? What's the cost of false positives in such a system?</li>
+      </ol>
+
+      <h2 class="section">Pacing &amp; assessment notes</h2>
+      <dl class="pacing">
+        <dt>Estimated time</dt><dd>10–15 minutes solo, 25 minutes with debrief</dd>
+        <dt>Difficulty</dt><dd>Advanced — requires recognizing pattern in homogeneous logs</dd>
+        <dt>Perfect score</dt><dd>40 points (4 malicious × 10)</dd>
+        <dt>Acceptable score</dt><dd>30+ with at most one false positive</dd>
+      </dl>
+
+      <div class="rubric">
+        <p><strong>Assessment tip:</strong> If you have lab time, follow this scenario by demonstrating a real DNS tunneling tool — <code>iodine</code> or <code>dnscat2</code> are the classics, and both can be run safely in a contained lab. Seeing the technique work end-to-end transforms it from an abstraction into something students can identify thereafter on sight. Just be cautious about institutional policies on offensive tooling.</p>
+      </div>
+    `
+  },
+
+  // ──────────────────────────────────────────────────────────
+  // 7. Kerberoasting
+  // ──────────────────────────────────────────────────────────
+  {
+    title: "Service Tickets, Service Tickets Everywhere",
+    difficulty: 3,
+    estMinutes: 15,
+    body: `
+      <p class="lede">A user requests four Kerberos service tickets in four seconds, all encrypted with RC4 instead of the default AES, all targeting service accounts. Twenty-five minutes later, one of those service accounts logs into a domain controller and dumps the entire Active Directory database. This is Kerberoasting, the credential-access technique that quietly turned a regular user into a domain admin, and it remains one of the most prevalent post-foothold patterns in enterprise environments.</p>
+
+      <h2 class="section">Learning objectives</h2>
+      <p>After completing this scenario, students should be able to:</p>
+      <ul>
+        <li>Recognize Kerberoasting from its log signature: a burst of <strong>Event 4769</strong> TGS requests, targeting service principal names (SPNs), with RC4 encryption (<code>enc=0x17</code>).</li>
+        <li>Explain why an attacker downgrades from AES to RC4: RC4-encrypted service tickets contain hashes that can be cracked offline using GPU-accelerated tooling.</li>
+        <li>Connect the offline-cracking phase (invisible to the SIEM) to its on-the-wire result: a successful logon as a service account from an unexpected source workstation.</li>
+        <li>Recognize <code>ntdsutil ... ifm</code> as a domain controller database extraction technique used after privilege escalation.</li>
+      </ul>
+
+      <h2 class="section">The attack chain</h2>
+      <p>Six malicious events across three stages. The chain spans about thirty minutes of wall clock time, but the offline cracking happens in between and isn't visible in the log — which is itself a teaching point. The pivots are the user account <code>f.alvarez</code>, the service account <code>svc_backup</code>, and the request type (4769 with RC4).</p>
+
+      <table class="killchain">
+        <thead><tr><th>Stage</th><th>Event</th><th>Tradecraft</th></tr></thead>
+        <tbody>
+          <tr><td class="stage">Credential Access</td><td>4× TGS requests for SPN service accounts, RC4 encryption, 4 seconds total</td><td>Kerberoasting harvest</td></tr>
+          <tr><td class="stage">— (offline)</td><td>Hash cracking happens here, not in the SIEM</td><td>~25 minute gap</td></tr>
+          <tr><td class="stage">Lateral Movement</td><td>Network logon as <code>svc_backup</code> at DC-02, sourced from f.alvarez's workstation</td><td>Pivot using cracked password</td></tr>
+          <tr><td class="stage">Credential Access (escalation)</td><td><code>ntdsutil "ac i ntds" "ifm"</code> on DC-02</td><td>NTDS.dit extraction — every hash in the domain</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="subsection">Why the noise is there</h3>
+      <p>The first TGS request at 11:22:11 is for a <code>HOST</code> service, which is what normal workstation-to-server access generates — students need to learn that not every 4769 event is suspicious. The legitimate AAD sign-in at 11:18:42 establishes that the user authenticated normally, with MFA, from a normal location. The Teams message about deploying a hotfix is innocuous. The Veeam incremental backup is the closing noise — and an important reminder that <em>service account activity in itself is not suspicious</em>; only specific service account activity at specific times from specific sources is.</p>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students flag the legitimate HOST TGS request along with the malicious ones. They've recognized "4769 = suspicious" but haven't internalized the discriminating fields. Press: <em>which fields are different between the legitimate request and the malicious ones?</em> Answer: encryption type (AES vs RC4) and service type (HOST vs MSSQL/svc_*). This is your opportunity to teach <strong>schema-aware analysis</strong> — knowing which fields in a log matter.</p>
+      </div>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students don't flag the svc_backup logon at DC-02 because they don't recognize the pivot. The clue is buried: the logon source is <code>workstation f.alvarez</code> — a service account should not be logging into a domain controller <em>from a user's workstation</em>. Service accounts that have business on a DC come from application servers, not from human users' endpoints. This is a generally applicable detection heuristic worth highlighting.</p>
+      </div>
+
+      <h2 class="section">Discussion prompts</h2>
+      <ol class="prompts">
+        <li>Why does the attacker target service accounts specifically rather than user accounts? What's different about service account passwords that makes them attractive to crack?</li>
+        <li>Active Directory administrators can configure service accounts to use AES-only encryption. Why is RC4 still allowed in most environments? What's the migration cost?</li>
+        <li>The 25-minute gap between the TGS requests and the eventual svc_backup logon is the offline cracking. What does that timeline tell you about the password strength? What if the gap had been three days instead?</li>
+        <li>If you were the detection engineer for this environment, would you alert on every 4769 with RC4 encryption, or only on bursts? What's the false positive rate trade-off, and how would you tune the rule over time?</li>
+      </ol>
+
+      <h2 class="section">Pacing &amp; assessment notes</h2>
+      <dl class="pacing">
+        <dt>Estimated time</dt><dd>12–20 minutes solo, 30 minutes with debrief</dd>
+        <dt>Difficulty</dt><dd>Advanced — requires Kerberos protocol familiarity</dd>
+        <dt>Perfect score</dt><dd>60 points (6 malicious × 10)</dd>
+        <dt>Acceptable score</dt><dd>40+ with at most two false positives</dd>
+      </dl>
+
+      <div class="rubric">
+        <p><strong>Assessment tip:</strong> Kerberoasting is the scenario most likely to expose gaps in Kerberos understanding. If your students struggle here, the root cause is usually not the exercise but the underlying protocol model. A quick whiteboard refresh — what a TGT is, what a TGS is, why service accounts have SPNs, what happens when you request a service ticket — pays large dividends. Consider running this scenario after a dedicated Kerberos session.</p>
+      </div>
+    `
+  },
+
+  // ──────────────────────────────────────────────────────────
+  // 8. Web shell
+  // ──────────────────────────────────────────────────────────
+  {
+    title: "An Unexpected File Under /uploads/",
+    difficulty: 2,
+    estMinutes: 12,
+    body: `
+      <p class="lede">The customer portal had a file upload vulnerability — patched two days ago. Today's logs show someone returning to a web shell that was dropped during the vulnerable window, executing commands through it, reading the database configuration, and exfiltrating 89,000 customer records via FTP. This scenario teaches that <strong>patching the vulnerability doesn't remove the files the attacker already dropped</strong>, and that web shells are one of the most persistent and underappreciated forms of attacker foothold.</p>
+
+      <h2 class="section">Learning objectives</h2>
+      <p>After completing this scenario, students should be able to:</p>
+      <ul>
+        <li>Recognize web shell activity from URL patterns — particularly <code>cmd=</code> parameters on files in unexpected directories like <code>/uploads/</code>.</li>
+        <li>Understand the time gap between web shell installation and exploitation — a foothold that sits dormant for days or weeks is a hallmark of patient operators.</li>
+        <li>Trace credential reuse: the attacker reads <code>db.conf</code> through the web shell, then uses those credentials to dump the customers table from the application's existing DB user.</li>
+        <li>Distinguish actor activity from background scanning noise (the two WAF blocks bracketing the chain are unrelated automated scans).</li>
+      </ul>
+
+      <h2 class="section">The attack chain</h2>
+      <p>Six events across five stages. The pivot is the source IP <code>91.218.114.4</code> appearing in every malicious request, plus the URL path containing <code>uploads/invoice.php</code>. The chain crosses two log sources: web access logs and database logs.</p>
+
+      <table class="killchain">
+        <thead><tr><th>Stage</th><th>Event</th><th>What's happening</th></tr></thead>
+        <tbody>
+          <tr><td class="stage">Initial Access</td><td>POST to <code>/portal/upload.php</code> with <code>invoice.php</code> (3 days ago)</td><td>Web shell upload during the vulnerable window</td></tr>
+          <tr><td class="stage">Execution</td><td>GET <code>/portal/uploads/invoice.php?cmd=whoami</code></td><td>Web shell test</td></tr>
+          <tr><td class="stage">Discovery</td><td>GET <code>...?cmd=ls -la /etc</code></td><td>Filesystem enumeration</td></tr>
+          <tr><td class="stage">Credential Access</td><td>GET <code>...?cmd=cat /var/www/config/db.conf</code></td><td>Reads database password</td></tr>
+          <tr><td class="stage">Collection</td><td>DB: <code>SELECT * FROM customers</code> returns 89,224 rows</td><td>Bulk extraction</td></tr>
+          <tr><td class="stage">Exfiltration</td><td>GET <code>...?cmd=curl -T /tmp/cust.csv ftp://...</code></td><td>FTP upload to attacker</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="subsection">Why the noise is there</h3>
+      <p>The two WAF blocks at the beginning and end of the log are deliberately included from <em>different source IPs</em>. They are automated SQL injection scanners hitting the same portal — common background noise on any internet-facing application. Students who assume "WAF block = part of an attack" will flag them; they need to learn that blocked attacks are <em>solved problems</em> and that unrelated source IPs are unrelated attackers. The legitimate CSS request at 06:19:14 (from a different IP) is normal traffic. The legitimate database connection from the application server at 06:22:48 is included because the malicious bulk SELECT comes immediately after — and uses the same application database user, which is the entire point.</p>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students flag the WAF blocks. After all, "SQL injection attempt blocked" sounds alarming. Reframe: <em>the WAF doing its job is not the same as an incident.</em> Successful blocks are noise unless followed by signs the attacker pivoted to another vector. Compare the source IPs (91.218.114.4 vs 45.142.193.81) — they're different actors entirely.</p>
+      </div>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students don't flag the database SELECT because it comes from the legitimate web server using the legitimate application user. Walk through the chain: the attacker read <code>db.conf</code> through the web shell, got the credentials, and used them to dump the table — <em>but the connection still appears to come from the web server because that's where the web shell is running</em>. The query (<code>SELECT *</code> with 89k rows returned) is anomalous relative to the application's normal query patterns even if the source and user are not.</p>
+      </div>
+
+      <h2 class="section">Discussion prompts</h2>
+      <ol class="prompts">
+        <li>The vulnerability was patched two days before this attack. What incident response steps should have been taken at the time of patching that would have prevented this attack? Hint: think filesystem.</li>
+        <li>Web application firewalls block SQL injection attempts well. They do <em>not</em> generally block file uploads with valid file extensions. What does this tell you about the role of WAFs versus other application security controls?</li>
+        <li>The attacker uses a single source IP for the entire session. In a real attack, what might they do differently to avoid this trivial pivot? How would you detect a more sophisticated actor who rotated through ten IPs?</li>
+        <li>Why FTP? In 2026 FTP is largely obsolete for legitimate use. Does that make it a stronger or weaker detection signal than HTTPS exfiltration?</li>
+      </ol>
+
+      <h2 class="section">Pacing &amp; assessment notes</h2>
+      <dl class="pacing">
+        <dt>Estimated time</dt><dd>10–15 minutes solo, 25 minutes with debrief</dd>
+        <dt>Difficulty</dt><dd>Intermediate — accessible to most students, with good discussion depth</dd>
+        <dt>Perfect score</dt><dd>60 points (6 malicious × 10)</dd>
+        <dt>Acceptable score</dt><dd>40+ with at most two false positives</dd>
+      </dl>
+
+      <div class="rubric">
+        <p><strong>Assessment tip:</strong> This scenario is good preparation for incident response exercises. After students complete it, ask them to write a brief (one-paragraph) incident report identifying the data lost, the entry vector, and the recommended remediation steps. This builds the written-communication skill that real SOC roles require and that classroom exercises often neglect.</p>
+      </div>
+    `
+  },
+
+  // ──────────────────────────────────────────────────────────
+  // 9. LOLBins
+  // ──────────────────────────────────────────────────────────
+  {
+    title: "Living Off the Land",
+    difficulty: 3,
+    estMinutes: 15,
+    body: `
+      <p class="lede">No malware. No unsigned binaries. No exploit payloads on disk. The attacker uses only built-in Windows utilities — <code>certutil</code>, <code>rundll32</code>, <code>schtasks</code>, <code>reg</code> — to download a payload, execute it, and establish dual-mechanism persistence. Microsoft Defender reports "Real-time protection ON, signatures up to date." This is the LOLBin scenario, and it teaches that <strong>signature-based detection has a hard floor</strong> against attackers willing to use signed Microsoft tooling.</p>
+
+      <h2 class="section">Learning objectives</h2>
+      <p>After completing this scenario, students should be able to:</p>
+      <ul>
+        <li>Define LOLBins — Living Off the Land Binaries — as legitimate, signed system utilities abused for malicious purposes.</li>
+        <li>Recognize specific LOLBin abuse patterns: <code>certutil -urlcache</code> as a downloader, <code>rundll32</code> executing arbitrary DLLs, <code>schtasks</code> for persistence, <code>reg</code> for Run-key persistence.</li>
+        <li>Explain why EDR systems detect LOLBin abuse through <strong>process lineage and command-line analysis</strong> rather than file signatures.</li>
+        <li>Recognize <strong>dual-mechanism persistence</strong> (scheduled task + Run key) as a deliberate redundancy.</li>
+      </ul>
+
+      <h2 class="section">The attack chain</h2>
+      <p>Six malicious events across three stages. The pivot is the host <code>HOST-MKT-04</code> and the user <code>p.rashid</code>, plus the file path <code>C:\\ProgramData\\update.dll</code> that recurs across the chain.</p>
+
+      <table class="killchain">
+        <thead><tr><th>Stage</th><th>Event</th><th>LOLBin abuse</th></tr></thead>
+        <tbody>
+          <tr><td class="stage">Initial Access</td><td>Google Drive download of payload</td><td>Cloud file-share as delivery</td></tr>
+          <tr><td class="stage">Execution</td><td><code>certutil -urlcache -split -f</code> from transfer.sh</td><td>certutil as downloader</td></tr>
+          <tr><td class="stage">Execution</td><td><code>rundll32 update.dll,StartW</code></td><td>rundll32 executing arbitrary DLL</td></tr>
+          <tr><td class="stage">Persistence</td><td><code>schtasks /create /tn "Adobe Update Service"</code></td><td>Scheduled task with misleading name</td></tr>
+          <tr><td class="stage">Persistence</td><td><code>reg add HKCU\\...\\Run /v AdobeUpd</code></td><td>Run key — second mechanism</td></tr>
+          <tr><td class="stage">Command &amp; Control</td><td>~2 KB every 5 minutes to 198.51.100.42</td><td>Low-volume beacon</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="subsection">Why the noise is there</h3>
+      <p>The LinkedIn pageview is included because students will sometimes flag any social media or cloud activity as suspicious. The Teams POST is normal corporate productivity traffic. The Defender real-time-protection-ON event is the meanest distractor — it shows that the endpoint protection is working as configured, but that doesn't mean the endpoint is safe; it means signature-based AV didn't fire, which is exactly what you'd expect for a LOLBin attack. The DHCP lease renewal at the end is a freebie.</p>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students don't flag the <code>certutil</code> command because they don't know what it does. <code>certutil</code> is a legitimate Windows tool for managing certificates — but its <code>-urlcache</code> option will download any URL, which is precisely the abuse. Walk students through reading command-line arguments as a primary signal of intent. A signed Microsoft binary doing something its name doesn't suggest is the LOLBin pattern in a sentence.</p>
+      </div>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students flag the Defender status line because they read "Real-time protection ON" as somehow involved in the attack. It's the opposite — Defender's presence is exactly what makes LOLBin attacks attractive to actors. Use this to teach the limits of endpoint AV: <em>signature-based detection cannot detect attacks made of signed binaries</em>. Modern EDR fills this gap with behavioral analysis.</p>
+      </div>
+
+      <h2 class="section">Discussion prompts</h2>
+      <ol class="prompts">
+        <li>The attacker creates two persistence mechanisms (scheduled task AND Run key). Why two? What does this tell you about how the attacker thinks about defender behavior?</li>
+        <li>The scheduled task and Run key both have names suggesting Adobe products. What's the operational logic of choosing this naming? What would happen if the attacker had named them more honestly?</li>
+        <li>If your organization's EDR generates alerts on every <code>certutil -urlcache</code> command, you'll catch this attack — and also generate false positives from legitimate certificate management activity. Where does the alert-tuning trade-off sit, and how do you make that decision?</li>
+        <li>What categories of users in your organization would <em>never</em> legitimately run <code>certutil</code>, <code>nltest</code>, or <code>net group "Domain Admins"</code> from their workstations? Could you build a detection that's tightly scoped to those populations?</li>
+      </ol>
+
+      <h2 class="section">Pacing &amp; assessment notes</h2>
+      <dl class="pacing">
+        <dt>Estimated time</dt><dd>12–18 minutes solo, 30 minutes with debrief</dd>
+        <dt>Difficulty</dt><dd>Advanced — relies on familiarity with Windows internals</dd>
+        <dt>Perfect score</dt><dd>60 points (6 malicious × 10)</dd>
+        <dt>Acceptable score</dt><dd>40+ with at most two false positives</dd>
+      </dl>
+
+      <div class="rubric">
+        <p><strong>Assessment tip:</strong> The LOLBAS Project (<code>lolbas-project.github.io</code>) is the canonical reference for known LOLBin abuse patterns. Assigning students to look up two or three of the binaries used in this scenario and report on the other ways they can be abused is an excellent follow-on exercise — it builds the habit of consulting reference resources rather than relying on memory, which is the actual research workflow of working analysts.</p>
+      </div>
+    `
+  },
+
+  // ──────────────────────────────────────────────────────────
+  // 10. OAuth abuse
+  // ──────────────────────────────────────────────────────────
+  {
+    title: "The App Nobody Installed",
+    difficulty: 2,
+    estMinutes: 12,
+    body: `
+      <p class="lede">A user clicks a DocuSign-themed phishing link. The link leads to a legitimate Microsoft OAuth consent page — for an attacker-controlled application requesting Mail.Read, Mail.Send, Files.Read.All, and offline_access. The user clicks Accept. The attacker now has a refresh token that survives password resets and most MFA flows. No password was ever entered into the wrong site. This scenario teaches that <strong>OAuth consent is a credential, and phishing for consent is a category of attack distinct from phishing for passwords</strong>.</p>
+
+      <h2 class="section">Learning objectives</h2>
+      <p>After completing this scenario, students should be able to:</p>
+      <ul>
+        <li>Define the illicit consent grant attack and explain how it differs from traditional credential phishing.</li>
+        <li>Recognize the audit log signature: a consent prompt for an unverified-publisher application requesting sensitive Graph scopes.</li>
+        <li>Explain why MFA and password resets do not invalidate consent — refresh tokens are independent of password state.</li>
+        <li>Identify the post-consent attack pattern: Graph API enumeration of mail and OneDrive, followed by outbound phishing from the compromised account.</li>
+      </ul>
+
+      <h2 class="section">The attack chain</h2>
+      <p>Seven events across four stages. The pivot is the user <code>s.nakamura</code> and the malicious app name <code>DocuSign Secure Sign</code>. This chain crosses four log sources: inbound email, web proxy, identity consent log, and Graph API audit log — which is part of what makes it pedagogically rich.</p>
+
+      <table class="killchain">
+        <thead><tr><th>Stage</th><th>Event</th><th>Note</th></tr></thead>
+        <tbody>
+          <tr><td class="stage">Initial Access</td><td>Phishing email from <code>docusing-portal.com</code> (typo)</td><td>Lookalike domain</td></tr>
+          <tr><td class="stage">Initial Access</td><td>User clicks the link</td><td>Lands on real OAuth consent page</td></tr>
+          <tr><td class="stage">Initial Access</td><td>OAuth consent prompt: Mail.Read, Mail.Send, Files.Read.All, offline_access</td><td>The most sensitive combination</td></tr>
+          <tr><td class="stage">Persistence</td><td>Consent GRANTED — publisher unverified</td><td>Refresh token issued; persists across password changes</td></tr>
+          <tr><td class="stage">Collection</td><td>Graph API: 8,442 messages enumerated</td><td>Mailbox harvest</td></tr>
+          <tr><td class="stage">Collection</td><td>Graph API: 1,203 OneDrive files indexed</td><td>File inventory</td></tr>
+          <tr><td class="stage">Impact</td><td>47 outbound phishing emails sent as the victim</td><td>Onward phishing wave</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="subsection">Why the noise is there</h3>
+      <p>The legitimate inbound marketing newsletter is included because students need to learn that <em>most email is fine</em>. The user <code>m.kowalski's</code> self-service password reset is the trickiest distractor — students who have internalized "password changes = suspicious" will flag it. Press: <em>self-service resets by a different user, through the documented flow, with no anomalous source, are not part of this chain</em>. The nightly backup completing at the end is straightforward noise.</p>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students flag the phishing email but not the consent grant. They've been trained to recognize phishing; they have not been trained to recognize <em>what happens after the user clicks</em>. The consent grant is the actual compromise — without it, the phishing email is just an email. Walk students through the difference between <strong>credential phishing</strong> (steal the password, then need to also bypass MFA) and <strong>consent phishing</strong> (the user authorizes the attacker's app in their own session, no password ever leaves the legitimate provider).</p>
+      </div>
+
+      <div class="misconception">
+        <div class="heading">Common mistake</div>
+        <p>Students assume that resetting the user's password would clean up this incident. It would not. The refresh token issued by the OAuth grant is a separate credential; it survives password resets and most MFA challenges until the consent itself is explicitly revoked. The remediation is to delete the malicious app from the tenant and revoke its refresh tokens — and this needs to happen at the identity provider, not the user account.</p>
+      </div>
+
+      <h2 class="section">Discussion prompts</h2>
+      <ol class="prompts">
+        <li>What administrative controls in Microsoft Entra ID would prevent users from consenting to unverified-publisher applications? What's the trade-off — and which categories of legitimate work would be affected?</li>
+        <li>The app requests <code>offline_access</code> alongside <code>Mail.Read</code>. Walk through what each scope grants and explain specifically what <code>offline_access</code> adds.</li>
+        <li>This attack does not require the attacker to know the user's password, and MFA does not protect against it. Does that mean MFA is overrated, or that we're applying it to the wrong layer? Defend your answer.</li>
+        <li>If your tenant has 5,000 users and you want to investigate whether other accounts were targeted by this campaign, what queries would you run? What audit log fields are most useful?</li>
+      </ol>
+
+      <h2 class="section">Pacing &amp; assessment notes</h2>
+      <dl class="pacing">
+        <dt>Estimated time</dt><dd>10–15 minutes solo, 25 minutes with debrief</dd>
+        <dt>Difficulty</dt><dd>Intermediate — concept-heavy, less about pattern recognition</dd>
+        <dt>Perfect score</dt><dd>70 points (7 malicious × 10)</dd>
+        <dt>Acceptable score</dt><dd>50+ with at most two false positives</dd>
+      </dl>
+
+      <div class="rubric">
+        <p><strong>Assessment tip:</strong> This scenario rewards a pre-lecture on OAuth flows specifically — what an authorization code grant looks like, what scopes are, how refresh tokens differ from access tokens. Without that grounding, students will treat this as "a different kind of phishing" rather than seeing the distinct credential model. The MITRE technique to assign for follow-up reading is <a href="https://attack.mitre.org/techniques/T1528/">T1528 (Steal Application Access Token)</a>.</p>
+      </div>
+    `
+  }
+];
+
+const RUBRIC = {
+  type: "back",
+  title: "Assessment Rubric",
+  eyebrow: "Appendix A",
+  body: `
+    <p class="lede">The student module produces a numeric score per scenario (+10 per correct identification, −5 per false positive, floored at zero). That score is a useful first signal but doesn't tell you what kind of mistakes a student is making. This rubric is designed to convert raw scores into a more diagnostic picture of student competence.</p>
+
+    <h2 class="section">Per-scenario rubric</h2>
+    <p>For each scenario, evaluate the student's work along three dimensions:</p>
+
+    <table class="killchain">
+      <thead><tr><th>Dimension</th><th>What to look for</th><th>Weight</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="stage">Correlation</td>
+          <td>Did the student identify the full attack chain, or only part of it? Missing one stage is partial credit; missing the persistence or impact stages specifically is a larger gap because those are where business loss occurs.</td>
+          <td>50%</td>
+        </tr>
+        <tr>
+          <td class="stage">Discrimination</td>
+          <td>How many false positives did the student flag? In an operational context, an analyst who flags ten benign events to find one real one is creating more work than they're saving.</td>
+          <td>30%</td>
+        </tr>
+        <tr>
+          <td class="stage">Explanation</td>
+          <td>If you ask the student to verbalize <em>why</em> each flagged event belongs to the chain, can they articulate the pivot field? Pattern matching without understanding produces brittle analysts.</td>
+          <td>20%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 class="section">Module-level competency tiers</h2>
+
+    <h3 class="subsection">Tier 1 — Needs reteach (0–40% of total possible)</h3>
+    <p>The student is flagging events without clear correlation logic, missing major attack stages, or generating many false positives. Recommended action: revisit the kill chain framework and walk through one Beginner scenario together, narrating the pivots aloud.</p>
+
+    <h3 class="subsection">Tier 2 — Developing (40–70%)</h3>
+    <p>The student can find the obvious malicious events but struggles with persistence mechanisms, hidden lateral moves, or scenarios that require domain-specific knowledge (Kerberos, OAuth, npm). Recommended action: targeted instruction on the specific weak areas, then reassessment with the Advanced scenarios.</p>
+
+    <h3 class="subsection">Tier 3 — Proficient (70–90%)</h3>
+    <p>The student catches most of the chain in most scenarios with minimal over-flagging. They can articulate their reasoning when asked. They are ready for hands-on SIEM tooling exercises with real query languages.</p>
+
+    <h3 class="subsection">Tier 4 — Exemplary (90%+)</h3>
+    <p>The student is finding chains efficiently, with near-zero false positives, and can teach the reasoning to peers. Use these students as small-group leaders during the Advanced scenarios.</p>
+
+    <h2 class="section">Authentic assessment extensions</h2>
+    <p>For a more authentic assessment, supplement the module's numeric scoring with one or more of:</p>
+    <ul>
+      <li><strong>Written incident report.</strong> After completing a scenario, the student writes a one-paragraph IR summary identifying the entry vector, affected assets, and recommended remediation. This builds the written-communication competency that most SOC roles require.</li>
+      <li><strong>Detection rule writing.</strong> Ask the student to write a pseudocode SIEM detection rule that would have caught one event in the chain. Discuss tuning trade-offs.</li>
+      <li><strong>Peer instruction.</strong> Pair a Tier 3/4 student with a Tier 1/2 student to work a scenario together, with the proficient student narrating reasoning. The teaching reinforces the learner; the learner exposes gaps in the teacher.</li>
+      <li><strong>Live demo.</strong> Have a student walk through their reasoning on a scenario in front of the class. Other students may flag inconsistencies — and those discussions are where deep learning happens.</li>
+    </ul>
+  `
+};
+
+const MAPPING = {
+  type: "back",
+  title: "MITRE ATT&CK Mapping",
+  eyebrow: "Appendix B",
+  body: `
+    <p class="lede">The ten scenarios collectively cover a broad swath of the MITRE ATT&amp;CK Enterprise matrix. This appendix maps each scenario to specific techniques so you can align the module with curricula that use ATT&amp;CK explicitly, or use the mapping to assign targeted technique reading after a student completes a scenario.</p>
+
+    <h2 class="section">Coverage by tactic</h2>
+    <p>Across all ten scenarios, the module touches every major ATT&amp;CK tactic except <em>Resource Development</em> (which is largely pre-attack) and <em>Reconnaissance</em> (which produces little defender-visible telemetry). The strongest coverage is in <em>Initial Access</em>, <em>Credential Access</em>, <em>Persistence</em>, and <em>Exfiltration</em> — the four tactics that most often appear in junior analyst alert queues.</p>
+
+    <h2 class="section">Per-scenario techniques</h2>
+
+    <table class="killchain">
+      <thead><tr><th>Scenario</th><th>Primary techniques</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>1. After-Hours O365 Compromise</td>
+          <td>T1110 Brute Force · T1078.004 Valid Accounts: Cloud · T1059.001 PowerShell · T1027 Obfuscated Files · T1041 Exfil over C2</td>
+        </tr>
+        <tr>
+          <td>2. MFA Fatigue</td>
+          <td>T1621 Multi-Factor Authentication Request Generation · T1564.008 Hide Artifacts: Email Hiding Rules · T1534 Internal Spearphishing</td>
+        </tr>
+        <tr>
+          <td>3. Insider Data Theft</td>
+          <td>T1005 Data from Local System · T1052.001 Exfil over USB · T1567.002 Exfil to Cloud Storage</td>
+        </tr>
+        <tr>
+          <td>4. Ransomware Staging</td>
+          <td>T1566.001 Spearphishing Attachment · T1059.001 PowerShell · T1071.001 Web Protocols · T1087.002 Account Discovery: Domain · T1018 Remote System Discovery · T1021.002 SMB/Admin Shares · T1490 Inhibit System Recovery</td>
+        </tr>
+        <tr>
+          <td>5. Supply Chain (npm)</td>
+          <td>T1195.001 Compromise Software Dependencies · T1059.001 PowerShell · T1071.001 Web Protocols · T1552.001 Credentials in Files</td>
+        </tr>
+        <tr>
+          <td>6. DNS Tunneling</td>
+          <td>T1071.004 Application Layer Protocol: DNS · T1048.003 Exfil over Unencrypted/Obfuscated Non-C2 Protocol</td>
+        </tr>
+        <tr>
+          <td>7. Kerberoasting</td>
+          <td>T1558.003 Steal or Forge Kerberos Tickets: Kerberoasting · T1078.002 Valid Accounts: Domain · T1003.003 OS Credential Dumping: NTDS</td>
+        </tr>
+        <tr>
+          <td>8. Web Shell</td>
+          <td>T1505.003 Server Software Component: Web Shell · T1059.004 Unix Shell · T1083 File and Directory Discovery · T1552.001 Credentials in Files · T1048.003 Exfil over Non-C2 Protocol (FTP)</td>
+        </tr>
+        <tr>
+          <td>9. Living Off the Land</td>
+          <td>T1105 Ingress Tool Transfer · T1218.011 System Binary Proxy Execution: Rundll32 · T1140 Deobfuscate/Decode Files · T1053.005 Scheduled Task · T1547.001 Registry Run Keys</td>
+        </tr>
+        <tr>
+          <td>10. OAuth Consent Phishing</td>
+          <td>T1566.002 Spearphishing Link · T1528 Steal Application Access Token · T1098.001 Account Manipulation: Additional Cloud Credentials · T1114.002 Email Collection: Remote · T1534 Internal Spearphishing</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 class="section">Recommended student exercise</h2>
+    <p>After a student completes any given scenario, assign them to look up one technique from that scenario on the MITRE ATT&amp;CK website (<code>attack.mitre.org</code>) and write a short summary of: the technique's procedure, the data sources that detect it, and one named adversary group known to use it. This builds three habits at once: navigating reference material, mapping detection back to data sources, and connecting techniques to real threat actors.</p>
+
+    <h2 class="section">Note on framework versioning</h2>
+    <p>MITRE ATT&amp;CK is updated quarterly; technique IDs and sub-techniques occasionally change. The IDs above are current as of the module's authoring date. If you're aligning to a curriculum that uses a specific ATT&amp;CK version, verify the current canonical IDs at the time of teaching.</p>
+  `
+};
+
+// ============================================================
+// STATE & RENDERING
+// ============================================================
+const STORAGE_KEY = "siem-instructor-guide-v1";
+let currentSection = "overview"; // 'overview' | 'rubric' | 'mapping' | scenario index as string
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (s.section) currentSection = s.section;
+    }
+  } catch (e) { /* ignore */ }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ section: currentSection }));
+  } catch (e) { /* ignore */ }
+}
+
+// ============================================================
+// SIDEBAR
+// ============================================================
+function renderSidebar() {
+  // Scenarios list
+  const list = document.getElementById("scenarioNav");
+  list.innerHTML = "";
+  SCENARIOS.forEach((sc, i) => {
+    const li = document.createElement("li");
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.setAttribute("role", "tab");
+    btn.dataset.section = String(i);
+    btn.setAttribute("aria-selected", currentSection === String(i) ? "true" : "false");
+    if (currentSection === String(i)) btn.classList.add("active");
+
+    const num = document.createElement("span");
+    num.className = "num";
+    num.textContent = String(i + 1).padStart(2, "0");
+    btn.appendChild(num);
+
+    const lbl = document.createElement("span");
+    lbl.textContent = sc.title;
+    btn.appendChild(lbl);
+
+    li.appendChild(btn);
+    list.appendChild(li);
+  });
+
+  // Front and back matter
+  document.querySelectorAll(".sidebar-nav button[data-section]").forEach(btn => {
+    const sec = btn.dataset.section;
+    btn.classList.toggle("active", currentSection === sec);
+    btn.setAttribute("aria-selected", currentSection === sec ? "true" : "false");
+    btn.addEventListener("click", () => navigateTo(sec));
+  });
+}
+
+function navigateTo(section) {
+  currentSection = section;
+  saveState();
+  renderSidebar();
+  renderArticle();
+  // Scroll to top of content
+  document.querySelector(".content").scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// ============================================================
+// ARTICLE
+// ============================================================
+function renderArticle() {
+  const article = document.getElementById("article");
+  let data;
+  let eyebrow = "";
+  let chips = "";
+
+  if (currentSection === "overview") {
+    data = OVERVIEW;
+    eyebrow = data.eyebrow;
+  } else if (currentSection === "rubric") {
+    data = RUBRIC;
+    eyebrow = data.eyebrow;
+  } else if (currentSection === "mapping") {
+    data = MAPPING;
+    eyebrow = data.eyebrow;
+  } else {
+    const idx = parseInt(currentSection, 10);
+    if (isNaN(idx) || !SCENARIOS[idx]) {
+      currentSection = "overview";
+      return renderArticle();
+    }
+    const sc = SCENARIOS[idx];
+    const diffLabel = ["", "Beginner", "Intermediate", "Advanced"][sc.difficulty];
+    data = { title: sc.title, body: sc.body };
+    eyebrow = `Scenario ${idx + 1} of ${SCENARIOS.length}`;
+    chips = `
+      <span class="chip diff-${sc.difficulty}">${diffLabel}</span>
+      <span class="chip">~${sc.estMinutes} minutes</span>
+    `;
+  }
+
+  article.innerHTML = `
+    <div class="toolbar">
+      <button type="button" id="printBtn" aria-label="Print this section">Print this section</button>
+      ${currentSection !== "overview" && currentSection !== "rubric" && currentSection !== "mapping" ? `
+        <button type="button" id="prevBtn" aria-label="Previous scenario">← Previous</button>
+        <button type="button" id="nextBtn" aria-label="Next scenario">Next →</button>
+      ` : ""}
+    </div>
+    <header class="article-header">
+      <div class="eyebrow">${eyebrow}</div>
+      <h1>${data.title}</h1>
+      ${chips ? `<div class="meta">${chips}</div>` : ""}
+    </header>
+    ${data.body}
+    <footer class="guide-footer">
+      <p>Instructor Guide · <span class="program">Networking &amp; Cybersecurity</span> · Brookdale Community College · 2026</p>
+    </footer>
+  `;
+
+  // Wire buttons
+  const printBtn = document.getElementById("printBtn");
+  if (printBtn) printBtn.addEventListener("click", () => window.print());
+
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  if (prevBtn) {
+    const idx = parseInt(currentSection, 10);
+    prevBtn.disabled = idx === 0;
+    prevBtn.addEventListener("click", () => navigateTo(String(idx - 1)));
+  }
+  if (nextBtn) {
+    const idx = parseInt(currentSection, 10);
+    nextBtn.disabled = idx === SCENARIOS.length - 1;
+    nextBtn.addEventListener("click", () => navigateTo(String(idx + 1)));
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+loadState();
+renderSidebar();
+renderArticle();
+</script>
+</body>
+</html>
