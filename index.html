@@ -182,6 +182,15 @@
   .module-card.accent { border-top-color: var(--accent); }
   .module-card.accent:hover { border-top-color: var(--primary-light); }
 
+  /* Featured / headline card — full width, slightly stronger presence */
+  .module-card.featured {
+    border-top-width: 5px;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(180deg, var(--shade-2) 0%, var(--surface) 60%);
+  }
+  .module-card.featured h3 { font-size: 1.45rem; }
+  .module-card.featured .card-eyebrow { color: var(--warning); }
+
   .module-card .card-eyebrow {
     font-size: 0.75rem;
     text-transform: uppercase;
@@ -365,8 +374,25 @@
       <h2 id="siem-heading">SIEM Correlation Practice</h2>
     </div>
     <p class="collection-intro">
-      A hands-on SOC Tier-1 training module: ten interactive scenarios where students identify attack chains hidden inside streams of routine network and security telemetry. Paired instructor companion covers learning objectives, attack walkthroughs, common misconceptions, discussion prompts, and assessment rubrics.
+      A hands-on SOC Tier-1 training suite where students identify attack chains hidden inside streams of routine network and security telemetry. The procedural generator produces an endless supply of fresh, seeded cases; the ten-scenario practice module and its instructor companion provide a fixed, curriculum-ready set with full walkthroughs, discussion prompts, and assessment rubrics.
     </p>
+
+    <a class="module-card accent featured" href="siem-correlation-generator.html" target="_blank" rel="noopener noreferrer">
+      <div class="card-eyebrow">Dynamic Generator · Newest</div>
+      <h3>SIEM Correlation Generator</h3>
+      <p class="lede">A procedurally generated correlation exercise that builds a brand-new attack chain — hidden inside realistic noise that deliberately resembles the attack — on every load. Pick from ten classic attack types, let it choose at random, or use <strong>Composed</strong> mode to assemble novel multi-stage chains you've never seen. Three difficulty levels control chain length and noise volume.</p>
+      <ul class="meta-list">
+        <li>Endless cases</li>
+        <li>3 difficulty levels</li>
+        <li>Seeded &amp; shareable</li>
+        <li>SOC Tier 1</li>
+      </ul>
+      <div class="topics">
+        <strong>Why it's different</strong>
+        Infinite replayability — fresh attack chains and noise every load · Composed procedural chains under realistic ordering rules · Deterministic seeds let you share an exact case with a colleague or compare answers · Reconstructed analyst notes explain the correlation after each attempt
+      </div>
+      <span class="open-link">Open generator<span class="sr-only"> (opens in new tab)</span></span>
+    </a>
 
     <div class="card-pair">
 
