@@ -972,6 +972,7 @@
     <a href="#m8">8 · Tabletop</a>
     <a href="#m9">9 · Lessons Learned</a>
     <a href="#assessment">Quiz</a>
+    <a href="#references">References</a>
   </div>
 </nav>
 <div class="progress-track"><div class="progress-bar" id="progressBar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="Lesson progress"></div></div>
@@ -1593,7 +1594,14 @@
   <span class="module-tag">Module 7</span>
   <span class="duration">75 min</span>
   <h2>AI Incident Response — Adapting the 800-61 Lifecycle</h2>
-  <p>NIST SP 800-61 codifies the incident response lifecycle a CISM knows by heart: <strong>Preparation; Detection &amp; Analysis; Containment, Eradication &amp; Recovery; Post-Incident Activity</strong>. That structure is sound for AI incidents too. What changes is the contents of each phase. Click through the phases to see what shifts when the asset is an AI system.</p>
+  <p>NIST SP 800-61 codifies the incident response lifecycle a CISM knows well. The familiar <strong>Rev 2 four-phase model</strong> — Preparation; Detection &amp; Analysis; Containment, Eradication &amp; Recovery; Post-Incident Activity — remains the way most CISM training materials present incident response, and it's the model used in CISM Domain 4. <strong>In April 2025, however, NIST finalized SP 800-61 Revision 3</strong>, which supersedes Rev 2 and reorganizes incident response around the six functions of NIST CSF 2.0 (Govern, Identify, Protect, Detect, Respond, Recover) with continuous Improvement, rather than a linear four-phase model.</p>
+  <p>Both framings are useful, and the substance of what an IR team does has not fundamentally changed. The Rev 2 phases map cleanly onto Rev 3's functions, and a CISM-trained practitioner should be able to navigate either. Below we walk the <strong>Rev 2 four-phase model</strong> applied to AI incidents — because it remains the dominant framing in current CISM materials and the easiest mental model for a CISM-to-AAISM bridge. The same shifts apply if you prefer to think in CSF 2.0 terms.</p>
+  <p>Click through the phases to see what shifts when the asset is an AI system.</p>
+
+  <div class="callout bridge">
+    <div class="label">If You're Working in Rev 3 Terminology</div>
+    <p>Rev 3 maps incident-response activities to <strong>Govern</strong> (organizational policy and accountability for IR), <strong>Identify</strong> (asset, risk, and supplier understanding that feeds IR), <strong>Protect</strong> (controls that prevent or limit incidents), <strong>Detect</strong>, <strong>Respond</strong>, and <strong>Recover</strong>, with <strong>Improvement</strong> as a continuous feedback category in Identify. The AI-specific additions to each phase that follow apply equally to either model.</p>
+  </div>
 
   <div class="lifecycle">
     <button type="button" class="lifecycle-stage active" data-stage="1">
@@ -1642,7 +1650,7 @@
     <div class="tax-card">
       <div class="icon">📣</div>
       <h4>EU AI Act Reporting</h4>
-      <p>From August 2026, Article 73 requires serious-incident reporting for high-risk AI systems. CISM-trained IR teams must add this notification pathway alongside GDPR, sector regulators, and contractual notification obligations.</p>
+      <p>Article 73 of the EU AI Act requires serious-incident reporting for high-risk AI systems. Originally effective August 2026; the May 2026 AI Omnibus political agreement postpones the high-risk regime to December 2027 (Annex III) / August 2028 (Annex I), pending formal adoption. CISM-trained IR teams must add this notification pathway alongside GDPR, sector regulators, and contractual obligations.</p>
     </div>
     <div class="tax-card">
       <div class="icon">📐</div>
@@ -1858,7 +1866,7 @@
             <li><strong>EU (GDPR Article 33)</strong> — personal data was accessed without authorization; depending on impact assessment, a notification to the supervisory authority within 72 hours of awareness is likely required. Notification to data subjects required if high risk to rights and freedoms.</li>
             <li><strong>UK (UK GDPR / ICO)</strong> — parallel obligations.</li>
             <li><strong>US state breach laws</strong> — vary by state. Several states (including California, New York) trigger notification on unauthorized access to personal information. Most exclude purely financial fraud not involving SSNs, but the specifics matter.</li>
-            <li><strong>EU AI Act Article 73</strong> — if this AI system is classified as high-risk (debatable for a refund agent — probably not under Annex III, though arguments exist), a serious incident reporting obligation applies as of August 2026. Even if not triggered here, document the analysis.</li>
+            <li><strong>EU AI Act Article 73</strong> — if this AI system is classified as high-risk (debatable for a refund agent — probably not under Annex III, though arguments exist), a serious incident reporting obligation applies once the high-risk regime takes effect (originally August 2026; postponed to December 2027 for Annex III under the May 2026 AI Omnibus political agreement, pending formal adoption). Even if not triggered here, document the analysis.</li>
             <li><strong>Card networks</strong> — refund fraud is reportable to card networks under processor agreements.</li>
           </ul>
           <p><strong>Public posture:</strong></p>
@@ -1946,7 +1954,8 @@
           <strong>Facilitator notes — post-incident actions:</strong>
           <p><strong>Legal:</strong></p>
           <ul>
-            <li>Engage fair-lending counsel — disparate impact analysis under ECOA (US), and equivalent local laws. If you have an EU subsidiary, also fair-treatment obligations and (post-August 2026) EU AI Act high-risk provisions for credit scoring.</li>
+            <li>Engage fair-lending counsel. <strong>Federal landscape note:</strong> on 22 April 2026, the CFPB finalized a rule under Regulation B that eliminates disparate-impact liability under ECOA at the federal level. Fair-lending exposure for algorithmic discrimination in credit now flows primarily through: (a) <strong>state attorneys general and state regulators</strong> — Massachusetts AG has already settled an AI-underwriting disparate-impact action; New York DFS Circular Letter 7 (2024) and several other states retain authority; (b) the <strong>Fair Housing Act</strong>, where disparate impact survives federally per <em>Inclusive Communities</em> (2015) for mortgage and housing-related credit; (c) <strong>UDAP / state consumer protection</strong> claims; and (d) <strong>disparate-treatment</strong> claims under ECOA, which the rule did not eliminate.</li>
+            <li>For any EU subsidiary, also fair-treatment obligations and EU AI Act high-risk provisions for credit scoring (timing currently governed by the May 2026 AI Omnibus political agreement — verify current dates).</li>
             <li>Document your timeline and response — regulators care as much about how you reacted as about the issue itself.</li>
             <li>Determine whether harmed applicants need to be notified, given remediation, and offered re-review.</li>
             <li>Preserve the labeling vendor contract and any communications — third-party indemnification may be relevant.</li>
@@ -2018,6 +2027,63 @@
   </div>
   <button type="button" class="btn" id="gradeFinalBtn" style="margin-top:1rem;">Grade My Quiz</button>
   <button type="button" class="btn secondary" id="resetFinalBtn">Reset</button>
+</section>
+
+<!-- ===================== REFERENCES ===================== -->
+<section class="module" id="references">
+  <span class="module-tag">References</span>
+  <h2>Primary Sources &amp; Further Reading</h2>
+  <p>All factual claims in this lesson trace to the sources below. Threat references, IR guidance, and AI regulation are all evolving rapidly — verify current status before any operational or compliance decision. This lesson reflects the state of these references as of mid-May 2026.</p>
+
+  <h3>Threat &amp; Adversary Catalogs</h3>
+  <ul>
+    <li><strong>OWASP Top 10 for LLM Applications (2025)</strong> — official PDF and supporting material. OWASP Foundation. <em>genai.owasp.org</em></li>
+    <li><strong>MITRE ATLAS</strong> — Adversarial Threat Landscape for Artificial-Intelligence Systems. Complementary to MITRE ATT&amp;CK; documents tactics, techniques, mitigations, and case studies for attacks on AI/ML systems. <em>atlas.mitre.org</em></li>
+    <li><strong>MITRE ATT&amp;CK</strong> — Adversary tactics and techniques for traditional IT systems. <em>attack.mitre.org</em></li>
+    <li><strong>NIST AI 100-2 E2025</strong> — Adversarial Machine Learning: A Taxonomy and Terminology of Attacks and Mitigations. NIST, 24 March 2025.</li>
+  </ul>
+
+  <h3>NIST Incident Response Guidance</h3>
+  <ul>
+    <li><strong>NIST SP 800-61 Revision 3 — Incident Response Recommendations and Considerations for Cybersecurity Risk Management: A CSF 2.0 Community Profile</strong>. Finalized April 2025. Supersedes Rev 2 and reorganizes IR around CSF 2.0's six functions (Govern, Identify, Protect, Detect, Respond, Recover) with continuous Improvement.</li>
+    <li><strong>NIST SP 800-61 Revision 2 — Computer Security Incident Handling Guide</strong>. The classic four-phase lifecycle (Preparation; Detection &amp; Analysis; Containment, Eradication &amp; Recovery; Post-Incident Activity) used as the structural backbone of this lesson because it remains the dominant framing in current CISM materials.</li>
+    <li><strong>NIST Cybersecurity Framework 2.0</strong> — Added the Govern function in February 2024. <em>www.nist.gov/cyberframework</em></li>
+    <li><strong>NIST AI 100-1 — AI Risk Management Framework 1.0</strong>, January 2023. Four functions (Govern, Map, Measure, Manage); seven trustworthiness characteristics.</li>
+    <li><strong>NIST AI 600-1 — Generative AI Profile</strong>, July 2024.</li>
+  </ul>
+
+  <h3>EU AI Act &amp; Incident Reporting</h3>
+  <ul>
+    <li><strong>Regulation (EU) 2024/1689 (Artificial Intelligence Act)</strong>. Articles 5, 6, 27, 50, 73, 99 are the most operationally relevant.</li>
+    <li><strong>European Commission Draft Guidance on Reporting Serious Incidents under Article 73</strong>. Published 26 September 2025; consultation period closed 7 November 2025.</li>
+    <li><strong>AI Omnibus political agreement (7 May 2026)</strong> — Postpones Annex III high-risk obligations to 2 December 2027, Annex I to 2 August 2028, AI-generated content watermarking to 2 December 2026. Pending formal adoption. Article 73's effective date moves with the high-risk regime.</li>
+  </ul>
+
+  <h3>ISO/IEC Standards</h3>
+  <ul>
+    <li><strong>ISO/IEC 42001:2023</strong> — AI Management System (AIMS), certifiable.</li>
+    <li><strong>ISO/IEC 42005:2025</strong> — AI System Impact Assessment methodology.</li>
+    <li><strong>ISO/IEC 23894:2023</strong> — AI Risk Management.</li>
+    <li><strong>ISO/IEC 24029 (Parts 1 &amp; 2)</strong> — Robustness of neural networks.</li>
+  </ul>
+
+  <h3>ISACA AAISM</h3>
+  <ul>
+    <li><strong>AAISM Exam Content Outline</strong>, including Domain 3 ("AI Technologies and Controls") sub-areas: AI Security Architecture and Design; AI Life Cycle (model selection, training, validation); Data Management Controls; Privacy, Ethical, Trust and Safety Controls; Security Controls and Monitoring. <em>www.isaca.org/credentialing/aaism/aaism-exam-content-outline</em></li>
+    <li><strong>AAISM Review Manual</strong> — ISACA's official prep reference (covers control architecture, lifecycle management, and incident response domain content drawn on in Modules 4–8).</li>
+  </ul>
+
+  <h3>US Fair-Lending Context (Scenario 3)</h3>
+  <ul>
+    <li><strong>Equal Credit Opportunity Act (ECOA)</strong>, Regulation B. <strong>CFPB final rule of 22 April 2026</strong> eliminated federal disparate-impact liability under ECOA. Federal Register publication 22 April 2026.</li>
+    <li><strong>Fair Housing Act</strong> — Disparate-impact liability survives federally per <em>Texas Department of Housing and Community Affairs v. Inclusive Communities Project</em>, 576 U.S. 519 (2015), for mortgage and housing-related credit.</li>
+    <li><strong>State enforcement</strong> — Massachusetts AG settlement (10 July 2025) over AI underwriting; New York DFS Insurance Circular Letter No. 7 (2024) on AI/external data use; equivalent activity in California, Connecticut, Colorado, and other states.</li>
+  </ul>
+
+  <div class="callout emphasis">
+    <div class="label">A Note on Recent Changes</div>
+    <p>Two pieces of this lesson moved during 2025–early 2026: NIST SP 800-61 Rev 3 (April 2025) reorganizes the IR lifecycle around CSF 2.0; the CFPB's April 2026 rule changes the US federal fair-lending landscape; the May 2026 AI Omnibus postpones EU AI Act high-risk dates. <strong>None of these invalidate the IR muscle memory or the AI threat landscape a CISM needs to internalize</strong> — but each affects compliance specifics. Verify current status before any high-stakes decision.</p>
+  </div>
 </section>
 
 </main>
@@ -2116,7 +2182,7 @@ const stageData = {
     title: '📚 PREPARATION',
     meta: 'Before any incident',
     body: 'The CISM preparation phase — playbooks, training, contact lists, tooling — extends with AI-specific additions. Without preparation, AI incidents will be handled poorly the first time, and there is no second first time.',
-    activities: 'AI IR playbooks (deepfake, prompt injection, model poisoning, hallucination harm); model versioning and rollback capability; full prompt/response logging infrastructure; foundation-model vendor IR contact established; legal counsel briefed on EU AI Act Article 73; AI-specific tabletop exercises; updated severity rubric that includes ethical harm.',
+    activities: 'AI IR playbooks (deepfake, prompt injection, model poisoning, hallucination harm); model versioning and rollback capability; full prompt/response logging infrastructure; foundation-model vendor IR contact established; legal counsel briefed on EU AI Act Article 73 (effective date currently in flux under the May 2026 AI Omnibus); AI-specific tabletop exercises; updated severity rubric that includes ethical harm.',
     pitfall: 'Assuming the existing IR plan covers AI. The phases are the same; the contents are largely new. Generic IR readiness is necessary but not sufficient.'
   },
   2: {
@@ -2218,12 +2284,12 @@ const finalQs = [
     ]
   },
   {
-    q: "Under the EU AI Act, when does Article 73 serious-incident reporting take effect for high-risk AI systems?",
+    q: "Under the EU AI Act, what was the originally-scheduled effective date for Article 73 serious-incident reporting on high-risk AI systems, and what is its current status?",
     options: [
-      { t: "February 2025, with prohibited practices", c: false, e: "February 2025 was prohibited practices, not high-risk incident reporting." },
-      { t: "August 2025, with GPAI model obligations", c: false, e: "August 2025 was GPAI obligations, not Article 73 reporting." },
-      { t: "August 2026, alongside high-risk obligations", c: true, e: "Correct. High-risk AI system obligations including Article 73 serious-incident reporting take effect August 2026." },
-      { t: "Article 73 reporting is voluntary", c: false, e: "Article 73 reporting is binding for high-risk AI system providers." }
+      { t: "February 2025, alongside prohibited practices", c: false, e: "February 2025 was prohibited practices, not high-risk incident reporting." },
+      { t: "August 2025, alongside GPAI obligations", c: false, e: "August 2025 was GPAI obligations, not Article 73 reporting." },
+      { t: "Originally August 2026 alongside high-risk obligations; the May 2026 AI Omnibus political agreement postpones the high-risk regime (Annex III) to 2 December 2027, pending formal adoption", c: true, e: "Correct. The Act originally fixed August 2, 2026 for the high-risk regime including Article 73. The Digital Omnibus on AI agreement reached 7 May 2026 postpones Annex III high-risk obligations to 2 December 2027 and Annex I to 2 August 2028, subject to formal adoption. Always verify current status before relying on these dates." },
+      { t: "Article 73 reporting is voluntary", c: false, e: "Article 73 reporting is binding for providers of high-risk AI systems." }
     ]
   },
   {
